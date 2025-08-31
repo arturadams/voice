@@ -70,7 +70,11 @@ const SaveIcon = (p: any) => (
 );
 const TagIcon = (p: any) => <Icon {...p} path="M20 12l-8 8-9-9 4-4 9 9z" />;
 
-type ClipStatus = "idle" | "recording" | "saved" | "queued" | "uploaded" | "processing" | "error";
+type ClipStatus = "idle" | "recording" | "saved" | "queued" | "processing" | "uploaded" | "error";
+
+function toClipStatus(serverStatus: unknown): ClipStatus {
+  return serverStatus === "done" ? "uploaded" : "processing";
+}
 
 type Clip = {
   id: string;
@@ -353,7 +357,7 @@ export default function App() {
       const onLoaded = () => {
         resolve(a.duration);
         a.removeEventListener("loadedmetadata", onLoaded);
-        URL.revokeObjectURL(tempUrl); // revoke only the *temporary* URL
+        URL.revokeObjectURL(tempUrl);
       };
       a.addEventListener("loadedmetadata", onLoaded);
       a.onerror = () => {
@@ -423,13 +427,20 @@ export default function App() {
       }
       const data = await res.json();
       updateClip(c.id, {
-        status: "uploaded",
+        status: (data.status === "done") ? "uploaded" : "processing",
         serverId: data.id,
         title: data.title || c.title,
         tags: Array.isArray(data.tags) ? data.tags : c.tags,
         details: data.details || c.details,
         transcriptUrl: data.transcriptUrl || c.transcriptUrl,
       });
+      const updated: Clip = {
+        ...c,
+        serverId: data.id,
+        status: toClipStatus(data.status),
+      };
+      if (updated.status === "processing") startWatcher(updated);
+
     } catch (e: any) {
       console.error(e);
       updateClip(c.id, { status: "error" });
@@ -478,17 +489,85 @@ export default function App() {
         if (res.ok) {
           const data = await res.json();
           updateClip(c.id, {
-            title: data.title ?? c.title,
+            status: (data.status === "done") ? "uploaded" : "processing",
+            serverId: data.id,
+            title: data.title || c.title,
             tags: Array.isArray(data.tags) ? data.tags : c.tags,
-            details: data.details ?? c.details,
-            transcriptUrl: data.transcriptUrl ?? c.transcriptUrl,
+            details: data.details || c.details,
+            transcriptUrl: data.transcriptUrl || c.transcriptUrl,
           });
+          const updated: Clip = {
+            ...c,
+            serverId: data.id,
+            status: toClipStatus(data.status),
+          };
+          if (updated.status === "processing") startWatcher(updated);
         }
       }
     } catch (e) {
       console.error(e);
     }
   }
+
+  const pollingRef = useRef(new Map<string, { delay: number; handle: number | null }>());
+  function stopWatcher(id: string) {
+    const ent = pollingRef.current.get(id);
+    if (ent?.handle) clearTimeout(ent.handle);
+    pollingRef.current.delete(id);
+  }
+
+  async function fetchServerStatus(c: Clip) {
+    if (!c.serverId) return false;
+    try {
+      const res = await fetch(api.baseUrl.replace(/\/$/, "") + `${api.uploadPath}/${c.serverId}`, {
+        headers: { ...(api.authToken ? { Authorization: `Bearer ${api.authToken}` } : {}) }
+      });
+      if (res.status === 404) return false;         // not registered yet, keep polling
+      if (!res.ok) return false;
+
+      const data = await res.json();
+      if (data.status === "done") {
+        updateClip(c.id, {
+          status: "uploaded",
+          title: data.title ?? c.title,
+          tags: Array.isArray(data.tags) ? data.tags : c.tags,
+          details: data.details ?? c.details,
+          transcriptUrl: data.transcriptUrl ?? c.transcriptUrl
+        });
+        stopWatcher(c.id);
+        return true;
+      }
+    } catch { }
+    return false;
+  }
+
+
+  function startWatcher(c: Clip) {
+    if (!c.serverId) return;
+    stopWatcher(c.id);
+    let delay = 3000;
+    const tick = async () => {
+      if (!navigator.onLine || document.hidden) {
+        schedule(delay);
+        return;
+      }
+      const done = await fetchServerStatus(c);
+      if (!done) {
+        delay = Math.min(Math.floor(delay * 1.6), 60000);
+        schedule(delay);
+      }
+    };
+    function schedule(d: number) {
+      const handle = window.setTimeout(tick, d);
+      pollingRef.current.set(c.id, { delay: d, handle });
+    }
+    schedule(delay);
+  }
+
+  useEffect(() => {
+    clips.filter(x => x.status === "processing" && x.serverId).forEach(startWatcher);
+  }, [clips]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return clips;
