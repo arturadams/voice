@@ -427,30 +427,31 @@ export default function App() {
       // Prefer JSON id; fallback to Location header if needed
       let data: any = {};
       try { data = await res.json(); } catch { }
-      let serverId: string | undefined = data?.id;
 
-      // Optional: Location fallback (works if you set it in n8n)
+      let serverId: string | undefined = data?.id;
       if (!serverId) {
         const loc = res.headers.get('Location') || res.headers.get('Content-Location');
         if (loc) {
           const u = new URL(loc, api.baseUrl || window.location.origin);
-          const idFromLoc = u.searchParams.get('id');
-          if (idFromLoc) serverId = idFromLoc;
+          serverId = u.searchParams.get('id') || u.searchParams.get('job') || undefined;
         }
       }
       if (!serverId) throw new Error('Server did not return an id');
 
+      // 👉 Always consider the note "in flight" after POST.
+      // Do NOT trust any 'done' the POST might return.
       updateClip(c.id, {
-        status: toClipStatus(data?.status),
+        status: "processing",
         serverId,
-        title: data?.title || c.title,
+        title: data?.title ?? c.title,
         tags: Array.isArray(data?.tags) ? data.tags : c.tags,
-        details: data?.details || c.details,
-        transcriptUrl: data?.transcriptUrl || c.transcriptUrl,
+        details: data?.details ?? c.details,
+        transcriptUrl: data?.transcriptUrl ?? c.transcriptUrl,
       });
 
-      const updated: Clip = { ...c, serverId, status: toClipStatus(data?.status) };
-      if (updated.status === "processing") startWatcher(updated);
+      // Start polling immediately
+      const updated: Clip = { ...c, serverId, status: "processing" };
+      startWatcher(updated);
 
     } catch (e: any) {
       console.error(e);
@@ -499,20 +500,17 @@ export default function App() {
         );
         if (res.ok) {
           const data = await res.json();
+          const serverId = data?.id || c.serverId;
           updateClip(c.id, {
-            status: (data.status === "done") ? "uploaded" : "processing",
-            serverId: data.id,
-            title: data.title || c.title,
-            tags: Array.isArray(data.tags) ? data.tags : c.tags,
-            details: data.details || c.details,
-            transcriptUrl: data.transcriptUrl || c.transcriptUrl,
+            status: "processing",
+            serverId,
+            title: data?.title ?? c.title,
+            tags: Array.isArray(data?.tags) ? data.tags : c.tags,
+            details: data?.details ?? c.details,
+            transcriptUrl: data?.transcriptUrl ?? c.transcriptUrl,
           });
-          const updated: Clip = {
-            ...c,
-            serverId: data.id,
-            status: toClipStatus(data.status),
-          };
-          if (updated.status === "processing") startWatcher(updated);
+          startWatcher({ ...c, serverId, status: "processing" });
+
         }
       }
     } catch (e) {
