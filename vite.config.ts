@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 const REPO = "voice";
-const BASE = `/${REPO}/`;
+const BASE = `/`; //`/${REPO}/`;
 
 export default defineConfig({
   base: BASE, // important for assets & SW scope on GH Pages

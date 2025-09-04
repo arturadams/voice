@@ -416,29 +416,40 @@ export default function App() {
       fd.append("createdAt", String(c.createdAt));
       if (c.title) fd.append("title", c.title);
       if (c.tags?.length) fd.append("tags", JSON.stringify(c.tags));
-      const res = await fetch(api.baseUrl.replace(/\/$/, "") + api.uploadPath, {
-        method: "POST",
-        headers: { ...(api.authToken ? { Authorization: `Bearer ${api.authToken}` } : {}) },
-        body: fd,
-      });
+      const res = await fetch(
+        notesUrl(api.baseUrl, api.uploadPath /*, api.authToken ? { token: api.authToken } : undefined */),
+        { method: "POST", body: fd }
+      );
       if (!res.ok) {
         const txt = await res.text();
         throw new Error(`Upload failed: ${res.status} ${txt}`);
       }
-      const data = await res.json();
+      // Prefer JSON id; fallback to Location header if needed
+      let data: any = {};
+      try { data = await res.json(); } catch { }
+      let serverId: string | undefined = data?.id;
+
+      // Optional: Location fallback (works if you set it in n8n)
+      if (!serverId) {
+        const loc = res.headers.get('Location') || res.headers.get('Content-Location');
+        if (loc) {
+          const u = new URL(loc, api.baseUrl || window.location.origin);
+          const idFromLoc = u.searchParams.get('id');
+          if (idFromLoc) serverId = idFromLoc;
+        }
+      }
+      if (!serverId) throw new Error('Server did not return an id');
+
       updateClip(c.id, {
-        status: (data.status === "done") ? "uploaded" : "processing",
-        serverId: data.id,
-        title: data.title || c.title,
-        tags: Array.isArray(data.tags) ? data.tags : c.tags,
-        details: data.details || c.details,
-        transcriptUrl: data.transcriptUrl || c.transcriptUrl,
+        status: toClipStatus(data?.status),
+        serverId,
+        title: data?.title || c.title,
+        tags: Array.isArray(data?.tags) ? data.tags : c.tags,
+        details: data?.details || c.details,
+        transcriptUrl: data?.transcriptUrl || c.transcriptUrl,
       });
-      const updated: Clip = {
-        ...c,
-        serverId: data.id,
-        status: toClipStatus(data.status),
-      };
+
+      const updated: Clip = { ...c, serverId, status: toClipStatus(data?.status) };
       if (updated.status === "processing") startWatcher(updated);
 
     } catch (e: any) {
@@ -483,9 +494,9 @@ export default function App() {
       // Example strategy: re-fetch details for uploaded clips from your API.
       // Adjust endpoints to match your backend.
       for (const c of clips.filter(x => x.serverId)) {
-        const res = await fetch(api.baseUrl.replace(/\/$/, "") + `${api.uploadPath}/${c.serverId}`, {
-          headers: { ...(api.authToken ? { Authorization: `Bearer ${api.authToken}` } : {}) }
-        });
+        const res = await fetch(
+          notesUrl(api.baseUrl, api.uploadPath, { job: c.serverId! /* , ...(api.authToken ? { token: api.authToken } : {}) */ })
+        );
         if (res.ok) {
           const data = await res.json();
           updateClip(c.id, {
@@ -508,6 +519,24 @@ export default function App() {
       console.error(e);
     }
   }
+  function joinUrl(base: string, path: string) {
+    const b = (base || "").replace(/\/+$/, "");
+    const p = (path || "").replace(/^\/+/, "");
+    return `${b}/${p}`;
+  }
+
+  // Build /notes and add query params
+  function notesUrl(base: string, uploadPath: string, qs?: Record<string, string>) {
+    const p = ('/' + (uploadPath || '/notes').replace(/^\/+/, '')).replace(/\/+$/, '');
+    const full = joinUrl(base, p);
+    const u = new URL(full);
+    // // Bypass ngrok interstitial without custom headers
+    // if (!u.searchParams.has('ngrok-skip-browser-warning')) {
+    //   u.searchParams.set('ngrok-skip-browser-warning', 'true');
+    // }
+    Object.entries(qs || {}).forEach(([k, v]) => u.searchParams.set(k, String(v)));
+    return u.toString();
+  }
 
   const pollingRef = useRef(new Map<string, { delay: number; handle: number | null }>());
   function stopWatcher(id: string) {
@@ -519,10 +548,10 @@ export default function App() {
   async function fetchServerStatus(c: Clip) {
     if (!c.serverId) return false;
     try {
-      const res = await fetch(api.baseUrl.replace(/\/$/, "") + `${api.uploadPath}/${c.serverId}`, {
-        headers: { ...(api.authToken ? { Authorization: `Bearer ${api.authToken}` } : {}) }
-      });
-      if (res.status === 404) return false;         // not registered yet, keep polling
+      const res = await fetch(
+        notesUrl(api.baseUrl, api.uploadPath + "/status", { job: c.serverId! /* , ...(api.authToken ? { token: api.authToken } : {}) */ }), { method: 'POST' }
+      );
+      if (res.status === 404) return false;
       if (!res.ok) return false;
 
       const data = await res.json();
@@ -541,19 +570,19 @@ export default function App() {
     return false;
   }
 
-
   function startWatcher(c: Clip) {
     if (!c.serverId) return;
     stopWatcher(c.id);
-    let delay = 3000;
+
+    let delay = 0; // first tick now
     const tick = async () => {
       if (!navigator.onLine || document.hidden) {
-        schedule(delay);
+        schedule(Math.max(delay, 3000));
         return;
       }
       const done = await fetchServerStatus(c);
       if (!done) {
-        delay = Math.min(Math.floor(delay * 1.6), 60000);
+        delay = delay ? Math.min(Math.floor(delay * 1.6), 60000) : 3000;
         schedule(delay);
       }
     };
@@ -925,13 +954,8 @@ export default function App() {
                 <button
                   onClick={async () => {
                     try {
-                      const res = await fetch(api.baseUrl.replace(/\/$/, "") + api.uploadPath, {
-                        method: "OPTIONS",
-                        headers: {
-                          ...(api.authToken ? { Authorization: `Bearer ${api.authToken}` } : {}),
-                        },
-                      });
-                      alert(res.ok ? "Endpoint reachable (OPTIONS)." : "Failed: " + res.status);
+                      const res = await fetch(notesUrl(api.baseUrl, api.uploadPath /*, api.authToken ? { token: api.authToken } : undefined */));
+                      alert(res.ok ? "Endpoint reachable (GET)." : "Failed: " + res.status);
                     } catch (e: any) {
                       alert(e.message || String(e));
                     }
