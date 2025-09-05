@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "deploy": "vite build && gh-pages -d dist",
-    "test": "tsc src/services/services.test.ts --module commonjs --moduleResolution node --target ES2020 --esModuleInterop --outDir .tmp && node --test .tmp/services/services.test.js"
+    "test": "tsc src/services/*.ts src/models/clip.ts --module commonjs --moduleResolution node --target ES2020 --esModuleInterop --outDir .tmp && echo '{\"type\":\"commonjs\"}' > .tmp/package.json && mv .tmp/services/services.test.js .tmp/services/services.test.cjs && node --test .tmp/services/services.test.cjs"
   },
   "dependencies": {
     "react": "^18.3.1",
