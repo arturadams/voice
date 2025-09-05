@@ -1,96 +1,18 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-// Inline Icon Pack (no deps)
-const Icon = ({
-  path,
-  size = 20,
-  className = "",
-}: {
-  path: string;
-  size?: number;
-  className?: string;
-}) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    width={size}
-    height={size}
-    className={className}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d={path} />
-  </svg>
-);
-const MicIcon = (p: any) => <Icon {...p} path="M12 1v11a3 3 0 0 1-6 0V5a3 3 0 0 1 6 0" />;
-const StopIcon = (p: any) => <Icon {...p} path="M5 5h14v14H5z" />;
-const PauseIcon = (p: any) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    width={p.size || 20}
-    height={p.size || 20}
-    className={p.className || ""}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <line x1="6" y1="4" x2="6" y2="20" />
-    <line x1="18" y1="4" x2="18" y2="20" />
-  </svg>
-);
-const PlayIcon = (p: any) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    width={p.size || 20}
-    height={p.size || 20}
-    className={p.className || ""}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <polygon points="5 3 19 12 5 21 5 3" />
-  </svg>
-);
-const UploadIcon = (p: any) => <Icon {...p} path="M12 16V3m0 0l-4 4m4-4l4 4M5 21h14" />;
-const TrashIcon = (p: any) => <Icon {...p} path="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" />;
-const SettingsIcon = (p: any) => (
-  <Icon {...p} path="M12 1l2 3 3 1 1 3 3 2-3 2-1 3-3 1-2 3-2-3-3-1-1-3-3-2 3-2 1-3 3-1z" />
-);
-const SaveIcon = (p: any) => (
-  <Icon {...p} path="M19 21H5a2 2 0 0 1-2-2V5h13l3 3v11a2 2 0 0 1-2 2z" />
-);
-const TagIcon = (p: any) => <Icon {...p} path="M20 12l-8 8-9-9 4-4 9 9z" />;
-
-type ClipStatus = "idle" | "recording" | "saved" | "queued" | "processing" | "uploaded" | "error";
-
-function toClipStatus(serverStatus: unknown): ClipStatus {
-  return serverStatus === "done" ? "uploaded" : "processing";
-}
-
-type Clip = {
-  id: string;
-  createdAt: number;
-  mimeType: string;
-  size?: number;
-  duration?: number;
-  title?: string;
-  tags?: string[];
-  details?: string;
-  serverId?: string;
-  transcriptUrl?: string;
-  status: ClipStatus;
-  blob?: Blob;
-  objectUrl?: string;
-};
+import {
+  MicIcon,
+  StopIcon,
+  PauseIcon,
+  PlayIcon,
+  UploadIcon,
+  TrashIcon,
+  SettingsIcon,
+  SaveIcon,
+  TagIcon,
+} from "./icons";
+import { Clip, toClipStatus } from "./models/clip";
+import { idbPut, idbGetAll, idbDelete } from "./services/indexed-db";
 
 type ApiConfig = { baseUrl: string; uploadPath: string; authToken?: string };
 
@@ -109,54 +31,6 @@ const fmt = {
     return new Date(ts).toLocaleString();
   },
 };
-
-const DB_NAME = "voice-notes-db";
-const STORE = "clips";
-async function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) {
-        const s = db.createObjectStore(STORE, { keyPath: "id" });
-        s.createIndex("createdAt", "createdAt", { unique: false });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-async function idbPut(clip: Clip) {
-  const db = await openDb();
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(STORE, "readwrite");
-    const st = tx.objectStore(STORE);
-    const { objectUrl, ...persistable } = clip;
-    const rq = st.put(persistable);
-    rq.onsuccess = () => resolve();
-    rq.onerror = () => reject(rq.error);
-  });
-}
-async function idbGetAll(): Promise<Clip[]> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, "readonly");
-    const st = tx.objectStore(STORE);
-    const rq = st.getAll();
-    rq.onsuccess = () => resolve(rq.result as Clip[]);
-    rq.onerror = () => reject(rq.error);
-  });
-}
-async function idbDelete(id: string) {
-  const db = await openDb();
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(STORE, "readwrite");
-    const st = tx.objectStore(STORE);
-    const rq = st.delete(id);
-    rq.onsuccess = () => resolve();
-    rq.onerror = () => reject(rq.error);
-  });
-}
 
 export default function App() {
   const [api, setApi] = useState<ApiConfig>(() => {
@@ -553,14 +427,15 @@ export default function App() {
       if (!res.ok) return false;
 
       const data = await res.json();
-      if (data.status === "done") {
-        updateClip(c.id, {
-          status: "uploaded",
-          title: data.title ?? c.title,
-          tags: Array.isArray(data.tags) ? data.tags : c.tags,
-          details: data.details ?? c.details,
-          transcriptUrl: data.transcriptUrl ?? c.transcriptUrl
-        });
+      const status = toClipStatus(data.status);
+      updateClip(c.id, {
+        status,
+        title: data.title ?? c.title,
+        tags: Array.isArray(data.tags) ? data.tags : c.tags,
+        details: data.details ?? c.details,
+        transcriptUrl: data.transcriptUrl ?? c.transcriptUrl
+      });
+      if (status === "uploaded") {
         stopWatcher(c.id);
         return true;
       }
