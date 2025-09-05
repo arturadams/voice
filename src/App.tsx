@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ApiConfig, Clip, ClipStatus, StorageService, UploadService } from "./services/types";
+import IndexedDbStorage from "./services/indexed-db";
+import HttpUploader from "./services/http-uploader";
 
 // Inline Icon Pack (no deps)
 const Icon = ({
@@ -70,29 +73,8 @@ const SaveIcon = (p: any) => (
 );
 const TagIcon = (p: any) => <Icon {...p} path="M20 12l-8 8-9-9 4-4 9 9z" />;
 
-type ClipStatus = "idle" | "recording" | "saved" | "queued" | "processing" | "uploaded" | "error";
-
-function toClipStatus(serverStatus: unknown): ClipStatus {
-  return serverStatus === "done" ? "uploaded" : "processing";
-}
-
-type Clip = {
-  id: string;
-  createdAt: number;
-  mimeType: string;
-  size?: number;
-  duration?: number;
-  title?: string;
-  tags?: string[];
-  details?: string;
-  serverId?: string;
-  transcriptUrl?: string;
-  status: ClipStatus;
-  blob?: Blob;
-  objectUrl?: string;
-};
-
-type ApiConfig = { baseUrl: string; uploadPath: string; authToken?: string };
+const storage: StorageService = new IndexedDbStorage();
+const uploader: UploadService = new HttpUploader();
 
 const fmt = {
   pad(n: number) {
@@ -110,53 +92,6 @@ const fmt = {
   },
 };
 
-const DB_NAME = "voice-notes-db";
-const STORE = "clips";
-async function openDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORE)) {
-        const s = db.createObjectStore(STORE, { keyPath: "id" });
-        s.createIndex("createdAt", "createdAt", { unique: false });
-      }
-    };
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-}
-async function idbPut(clip: Clip) {
-  const db = await openDb();
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(STORE, "readwrite");
-    const st = tx.objectStore(STORE);
-    const { objectUrl, ...persistable } = clip;
-    const rq = st.put(persistable);
-    rq.onsuccess = () => resolve();
-    rq.onerror = () => reject(rq.error);
-  });
-}
-async function idbGetAll(): Promise<Clip[]> {
-  const db = await openDb();
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, "readonly");
-    const st = tx.objectStore(STORE);
-    const rq = st.getAll();
-    rq.onsuccess = () => resolve(rq.result as Clip[]);
-    rq.onerror = () => reject(rq.error);
-  });
-}
-async function idbDelete(id: string) {
-  const db = await openDb();
-  return new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(STORE, "readwrite");
-    const st = tx.objectStore(STORE);
-    const rq = st.delete(id);
-    rq.onsuccess = () => resolve();
-    rq.onerror = () => reject(rq.error);
-  });
-}
 
 export default function App() {
   const [api, setApi] = useState<ApiConfig>(() => {
@@ -188,7 +123,7 @@ export default function App() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   useEffect(() => {
     (async () => {
-      const all = await idbGetAll();
+      const all = await storage.getAll();
       all.sort((a, b) => b.createdAt - a.createdAt);
       setClips(all);
     })();
@@ -260,7 +195,7 @@ export default function App() {
         const objectUrl = URL.createObjectURL(blob);
         const duration = await probeDurationFromBlob(blob);
         const saved: Clip = { ...newClip, blob, objectUrl, size, duration, status: "saved" };
-        await idbPut(saved);
+        await storage.put(saved);
         setClips((prev) => [saved, ...prev]);
         setRecordingClip(null);
         setRecordMs(0);
@@ -372,7 +307,7 @@ export default function App() {
   async function playClip(c: Clip) {
     let url = c.objectUrl;
     if (!url && !c.blob) {
-      const all = await idbGetAll();
+      const all = await storage.getAll();
       const found = all.find((x) => x.id === c.id);
       if (found && (found as any).blob) {
         url = URL.createObjectURL((found as any).blob as Blob);
@@ -404,55 +339,16 @@ export default function App() {
       }
       let blob = c.blob;
       if (!blob) {
-        const all = await idbGetAll();
+        const all = await storage.getAll();
         const found = all.find((x) => x.id === c.id);
         if (found && (found as any).blob) blob = (found as any).blob as Blob;
       }
       if (!blob) throw new Error("Audio blob not found");
       updateClip(c.id, { status: "processing" });
-      const fd = new FormData();
-      const filename = `note-${c.id}.${c.mimeType.includes("mp4") ? "m4a" : "webm"}`;
-      fd.append("file", blob, filename);
-      fd.append("createdAt", String(c.createdAt));
-      if (c.title) fd.append("title", c.title);
-      if (c.tags?.length) fd.append("tags", JSON.stringify(c.tags));
-      const res = await fetch(
-        notesUrl(api.baseUrl, api.uploadPath /*, api.authToken ? { token: api.authToken } : undefined */),
-        { method: "POST", body: fd }
-      );
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`Upload failed: ${res.status} ${txt}`);
-      }
-      // Prefer JSON id; fallback to Location header if needed
-      let data: any = {};
-      try { data = await res.json(); } catch { }
-
-      let serverId: string | undefined = data?.id;
-      if (!serverId) {
-        const loc = res.headers.get('Location') || res.headers.get('Content-Location');
-        if (loc) {
-          const u = new URL(loc, api.baseUrl || window.location.origin);
-          serverId = u.searchParams.get('id') || u.searchParams.get('job') || undefined;
-        }
-      }
-      if (!serverId) throw new Error('Server did not return an id');
-
-      // 👉 Always consider the note "in flight" after POST.
-      // Do NOT trust any 'done' the POST might return.
-      updateClip(c.id, {
-        status: "processing",
-        serverId,
-        title: data?.title ?? c.title,
-        tags: Array.isArray(data?.tags) ? data.tags : c.tags,
-        details: data?.details ?? c.details,
-        transcriptUrl: data?.transcriptUrl ?? c.transcriptUrl,
-      });
-
-      // Start polling immediately
+      const serverId = await uploader.upload({ ...c, blob }, api);
+      updateClip(c.id, { status: "processing", serverId });
       const updated: Clip = { ...c, serverId, status: "processing" };
       startWatcher(updated);
-
     } catch (e: any) {
       console.error(e);
       updateClip(c.id, { status: "error" });
@@ -464,7 +360,7 @@ export default function App() {
     setClips((prev) => {
       const next = prev.map((c) => (c.id === id ? { ...c, ...patch } : c));
       const updated = next.find((c) => c.id === id);
-      if (updated) idbPut(updated);
+      if (updated) storage.put(updated);
       return next;
     });
   }
@@ -478,7 +374,7 @@ export default function App() {
       }
       return prev.filter((c) => c.id !== id);
     });
-    await idbDelete(id);
+    await storage.delete(id);
   }
   async function syncQueued() {
     // try to upload any queued clips
@@ -492,48 +388,26 @@ export default function App() {
   async function refreshMetadata() {
     try {
       if (!navigator.onLine) return;
-      // Example strategy: re-fetch details for uploaded clips from your API.
-      // Adjust endpoints to match your backend.
       for (const c of clips.filter(x => x.serverId)) {
-        const res = await fetch(
-          notesUrl(api.baseUrl, api.uploadPath, { job: c.serverId! /* , ...(api.authToken ? { token: api.authToken } : {}) */ })
-        );
-        if (res.ok) {
-          const data = await res.json();
-          const serverId = data?.id || c.serverId;
+        const data = await uploader.status(c.serverId!, api);
+        if (data) {
+          const serverId = data.id || c.serverId;
           updateClip(c.id, {
-            status: "processing",
+            status: data.status === "done" ? "uploaded" : "processing",
             serverId,
-            title: data?.title ?? c.title,
-            tags: Array.isArray(data?.tags) ? data.tags : c.tags,
-            details: data?.details ?? c.details,
-            transcriptUrl: data?.transcriptUrl ?? c.transcriptUrl,
+            title: data.title ?? c.title,
+            tags: Array.isArray(data.tags) ? data.tags : c.tags,
+            details: data.details ?? c.details,
+            transcriptUrl: data.transcriptUrl ?? c.transcriptUrl,
           });
-          startWatcher({ ...c, serverId, status: "processing" });
-
+          if (data.status !== "done") {
+            startWatcher({ ...c, serverId, status: "processing" });
+          }
         }
       }
     } catch (e) {
       console.error(e);
     }
-  }
-  function joinUrl(base: string, path: string) {
-    const b = (base || "").replace(/\/+$/, "");
-    const p = (path || "").replace(/^\/+/, "");
-    return `${b}/${p}`;
-  }
-
-  // Build /notes and add query params
-  function notesUrl(base: string, uploadPath: string, qs?: Record<string, string>) {
-    const p = ('/' + (uploadPath || '/notes').replace(/^\/+/, '')).replace(/\/+$/, '');
-    const full = joinUrl(base, p);
-    const u = new URL(full);
-    // // Bypass ngrok interstitial without custom headers
-    // if (!u.searchParams.has('ngrok-skip-browser-warning')) {
-    //   u.searchParams.set('ngrok-skip-browser-warning', 'true');
-    // }
-    Object.entries(qs || {}).forEach(([k, v]) => u.searchParams.set(k, String(v)));
-    return u.toString();
   }
 
   const pollingRef = useRef(new Map<string, { delay: number; handle: number | null }>());
@@ -546,14 +420,8 @@ export default function App() {
   async function fetchServerStatus(c: Clip) {
     if (!c.serverId) return false;
     try {
-      const res = await fetch(
-        notesUrl(api.baseUrl, api.uploadPath + "/status", { job: c.serverId! /* , ...(api.authToken ? { token: api.authToken } : {}) */ }), { method: 'POST' }
-      );
-      if (res.status === 404) return false;
-      if (!res.ok) return false;
-
-      const data = await res.json();
-      if (data.status === "done") {
+      const data = await uploader.status(c.serverId, api);
+      if (data && data.status === "done") {
         updateClip(c.id, {
           status: "uploaded",
           title: data.title ?? c.title,
@@ -952,7 +820,8 @@ export default function App() {
                 <button
                   onClick={async () => {
                     try {
-                      const res = await fetch(notesUrl(api.baseUrl, api.uploadPath /*, api.authToken ? { token: api.authToken } : undefined */));
+                      const endpoint = api.baseUrl.replace(/\/+$/, '') + '/' + api.uploadPath.replace(/^\/+/, '');
+                      const res = await fetch(endpoint);
                       alert(res.ok ? "Endpoint reachable (GET)." : "Failed: " + res.status);
                     } catch (e: any) {
                       alert(e.message || String(e));
