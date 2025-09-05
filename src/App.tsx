@@ -12,9 +12,7 @@ import {
   TagIcon,
 } from "./icons";
 import { Clip, toClipStatus } from "./models/clip";
-import { idbPut, idbGetAll, idbDelete } from "./services/indexed-db";
-
-type ApiConfig = { baseUrl: string; uploadPath: string; authToken?: string };
+import type { ApiConfig, StorageService, UploadService } from "./services/types";
 
 const fmt = {
   pad(n: number) {
@@ -32,7 +30,13 @@ const fmt = {
   },
 };
 
-export default function App() {
+export default function App({
+  storage,
+  uploader,
+}: {
+  storage: StorageService;
+  uploader: UploadService;
+}) {
   const [api, setApi] = useState<ApiConfig>(() => {
     const saved = localStorage.getItem("voiceNotes.api");
     return saved
@@ -62,7 +66,7 @@ export default function App() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   useEffect(() => {
     (async () => {
-      const all = await idbGetAll();
+      const all = await storage.getAll();
       all.sort((a, b) => b.createdAt - a.createdAt);
       setClips(all);
     })();
@@ -134,7 +138,7 @@ export default function App() {
         const objectUrl = URL.createObjectURL(blob);
         const duration = await probeDurationFromBlob(blob);
         const saved: Clip = { ...newClip, blob, objectUrl, size, duration, status: "saved" };
-        await idbPut(saved);
+        await storage.save(saved);
         setClips((prev) => [saved, ...prev]);
         setRecordingClip(null);
         setRecordMs(0);
@@ -246,7 +250,7 @@ export default function App() {
   async function playClip(c: Clip) {
     let url = c.objectUrl;
     if (!url && !c.blob) {
-      const all = await idbGetAll();
+      const all = await storage.getAll();
       const found = all.find((x) => x.id === c.id);
       if (found && (found as any).blob) {
         url = URL.createObjectURL((found as any).blob as Blob);
@@ -278,53 +282,24 @@ export default function App() {
       }
       let blob = c.blob;
       if (!blob) {
-        const all = await idbGetAll();
+        const all = await storage.getAll();
         const found = all.find((x) => x.id === c.id);
         if (found && (found as any).blob) blob = (found as any).blob as Blob;
       }
       if (!blob) throw new Error("Audio blob not found");
       updateClip(c.id, { status: "processing" });
-      const fd = new FormData();
-      const filename = `note-${c.id}.${c.mimeType.includes("mp4") ? "m4a" : "webm"}`;
-      fd.append("file", blob, filename);
-      fd.append("createdAt", String(c.createdAt));
-      if (c.title) fd.append("title", c.title);
-      if (c.tags?.length) fd.append("tags", JSON.stringify(c.tags));
-      const res = await fetch(
-        notesUrl(api.baseUrl, api.uploadPath /*, api.authToken ? { token: api.authToken } : undefined */),
-        { method: "POST", body: fd }
-      );
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`Upload failed: ${res.status} ${txt}`);
-      }
-      // Prefer JSON id; fallback to Location header if needed
-      let data: any = {};
-      try { data = await res.json(); } catch { }
-
-      let serverId: string | undefined = data?.id;
-      if (!serverId) {
-        const loc = res.headers.get('Location') || res.headers.get('Content-Location');
-        if (loc) {
-          const u = new URL(loc, api.baseUrl || window.location.origin);
-          serverId = u.searchParams.get('id') || u.searchParams.get('job') || undefined;
-        }
-      }
-      if (!serverId) throw new Error('Server did not return an id');
-
-      // 👉 Always consider the note "in flight" after POST.
-      // Do NOT trust any 'done' the POST might return.
+      const result = await uploader.upload({ ...c, blob }, api);
       updateClip(c.id, {
         status: "processing",
-        serverId,
-        title: data?.title ?? c.title,
-        tags: Array.isArray(data?.tags) ? data.tags : c.tags,
-        details: data?.details ?? c.details,
-        transcriptUrl: data?.transcriptUrl ?? c.transcriptUrl,
+        serverId: result.serverId,
+        title: result.title ?? c.title,
+        tags: result.tags ?? c.tags,
+        details: result.details ?? c.details,
+        transcriptUrl: result.transcriptUrl ?? c.transcriptUrl,
       });
 
       // Start polling immediately
-      const updated: Clip = { ...c, serverId, status: "processing" };
+      const updated: Clip = { ...c, serverId: result.serverId, status: "processing" };
       startWatcher(updated);
 
     } catch (e: any) {
@@ -338,7 +313,7 @@ export default function App() {
     setClips((prev) => {
       const next = prev.map((c) => (c.id === id ? { ...c, ...patch } : c));
       const updated = next.find((c) => c.id === id);
-      if (updated) idbPut(updated);
+      if (updated) storage.save(updated);
       return next;
     });
   }
@@ -352,7 +327,7 @@ export default function App() {
       }
       return prev.filter((c) => c.id !== id);
     });
-    await idbDelete(id);
+    await storage.remove(id);
   }
   async function syncQueued() {
     // try to upload any queued clips
