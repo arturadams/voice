@@ -12,7 +12,8 @@ import {
   TagIcon,
 } from "./icons";
 import { Clip, toClipStatus } from "./models/clip";
-import type { ApiConfig, ClipStore, UploadService } from "./services/types";
+import type { ApiConfig } from "./services/types";
+import { useStorage, useUploader } from "./context/services";
 
 const fmt = {
   pad(n: number) {
@@ -30,13 +31,9 @@ const fmt = {
   },
 };
 
-export default function App({
-  storage,
-  uploader,
-}: {
-  storage: ClipStore;
-  uploader: UploadService;
-}) {
+export default function App() {
+  const storage = useStorage();
+  const uploader = useUploader();
   const [api, setApi] = useState<ApiConfig>(() => {
     const saved = localStorage.getItem("voiceNotes.api");
     return saved
