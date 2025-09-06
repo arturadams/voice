@@ -5,6 +5,7 @@ import './index.css'
 import { registerSW } from 'virtual:pwa-register'
 import { IndexedDbStorage } from './services/indexed-db'
 import { HttpUploader } from './services/http-uploader'
+import { ServicesProvider } from './context/services'
 
 registerSW({ immediate: true })
 
@@ -13,7 +14,9 @@ const uploader = new HttpUploader()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <App storage={storage} uploader={uploader} />
+    <ServicesProvider storage={storage} uploader={uploader}>
+      <App />
+    </ServicesProvider>
   </React.StrictMode>,
 )
 
