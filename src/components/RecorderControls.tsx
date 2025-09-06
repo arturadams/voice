@@ -2,14 +2,12 @@ import { useRef, useState } from "react";
 import { MicIcon, StopIcon, PauseIcon, PlayIcon } from "../icons";
 import { Clip } from "../models/clip";
 import { useStorage } from "../context/services";
+import { useClips } from "../context/clips";
 import { fmt } from "../utils/fmt";
 
-interface RecorderControlsProps {
-  onSave(clip: Clip): void;
-}
-
-export function RecorderControls({ onSave }: RecorderControlsProps) {
+export function RecorderControls() {
   const storage = useStorage();
+  const { addClip } = useClips();
   const [permission, setPermission] = useState<"unknown" | "granted" | "denied">("unknown");
   const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
   const [recordingClip, setRecordingClip] = useState<Clip | null>(null);
@@ -79,7 +77,7 @@ export function RecorderControls({ onSave }: RecorderControlsProps) {
         const duration = await probeDurationFromBlob(blob);
         const saved: Clip = { ...newClip, blob, objectUrl, size, duration, status: "saved" };
         await storage.save(saved);
-        onSave(saved);
+        addClip(saved);
         setRecordingClip(null);
         setRecordMs(0);
       } catch (e) {

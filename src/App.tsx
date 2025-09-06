@@ -7,6 +7,7 @@ import { notesUrl } from "./utils/api";
 import { RecorderControls } from "./components/RecorderControls";
 import { ClipList } from "./components/ClipList";
 import { SettingsModal } from "./components/SettingsModal";
+import { ClipsProvider } from "./context/clips";
 
 export default function App() {
   const storage = useStorage();
@@ -158,6 +159,24 @@ export default function App() {
       console.error(e);
     }
   }
+
+  function addClip(clip: Clip) {
+    setClips((prev) => [clip, ...prev]);
+  }
+
+  const clipContextValue = {
+    clips,
+    playingId,
+    online,
+    addClip,
+    playClip,
+    stopPlayback,
+    uploadClip,
+    removeClip,
+    updateClip,
+    syncQueued,
+    refreshMetadata,
+  };
   const pollingRef = useRef(new Map<string, { delay: number; handle: number | null }>());
   function stopWatcher(id: string) {
     const ent = pollingRef.current.get(id);
@@ -262,20 +281,11 @@ export default function App() {
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-6">
-        <RecorderControls onSave={(clip) => setClips((prev) => [clip, ...prev])} />
-        <ClipList
-          clips={clips}
-          playingId={playingId}
-          online={online}
-          onPlay={playClip}
-          onStop={stopPlayback}
-          onUpload={uploadClip}
-          onDelete={removeClip}
-          onUpdate={updateClip}
-          onSyncQueued={syncQueued}
-          onRefresh={refreshMetadata}
-        />
-        <audio ref={audioElRef} onEnded={() => setPlayingId(null)} className="hidden" />
+        <ClipsProvider value={clipContextValue}>
+          <RecorderControls />
+          <ClipList />
+          <audio ref={audioElRef} onEnded={() => setPlayingId(null)} className="hidden" />
+        </ClipsProvider>
       </main>
 
       {showSettings && (

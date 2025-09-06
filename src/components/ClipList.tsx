@@ -1,33 +1,21 @@
 import { useMemo, useState } from "react";
 import { PlayIcon, StopIcon, UploadIcon, TrashIcon, TagIcon } from "../icons";
-import { Clip } from "../models/clip";
 import { fmt } from "../utils/fmt";
+import { useClips } from "../context/clips";
 
-interface ClipListProps {
-  clips: Clip[];
-  playingId: string | null;
-  online: boolean;
-  onPlay(c: Clip): void | Promise<void>;
-  onStop(): void;
-  onUpload(c: Clip): Promise<void>;
-  onDelete(id: string): Promise<void>;
-  onUpdate(id: string, patch: Partial<Clip>): void;
-  onSyncQueued(): void | Promise<void>;
-  onRefresh(): void | Promise<void>;
-}
-
-export function ClipList({
-  clips,
-  playingId,
-  online,
-  onPlay,
-  onStop,
-  onUpload,
-  onDelete,
-  onUpdate,
-  onSyncQueued,
-  onRefresh,
-}: ClipListProps) {
+export function ClipList() {
+  const {
+    clips,
+    playingId,
+    online,
+    playClip,
+    stopPlayback,
+    uploadClip,
+    removeClip,
+    updateClip,
+    syncQueued,
+    refreshMetadata,
+  } = useClips();
   const [search, setSearch] = useState("");
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -59,14 +47,14 @@ export function ClipList({
           {online ? "Online" : "Offline"}
         </span>
         <button
-          onClick={onSyncQueued}
+          onClick={syncQueued}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:shadow-sm"
           title="Upload any notes queued while offline"
         >
           Sync queued
         </button>
         <button
-          onClick={onRefresh}
+          onClick={refreshMetadata}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:shadow-sm"
           title="Pull latest tags/titles from server"
         >
@@ -76,7 +64,7 @@ export function ClipList({
           onClick={async () => {
             for (const c of filtered.filter((x) => x.status !== "uploaded")) {
               // eslint-disable-next-line no-await-in-loop
-              await onUpload(c);
+              await uploadClip(c);
             }
           }}
           className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:shadow-sm"
@@ -100,7 +88,7 @@ export function ClipList({
                   <input
                     className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium"
                     value={c.title || "Untitled note"}
-                    onChange={(e) => onUpdate(c.id, { title: e.target.value })}
+                    onChange={(e) => updateClip(c.id, { title: e.target.value })}
                   />
                   <span className="text-xs text-slate-500 whitespace-nowrap">
                     {fmt.date(c.createdAt)}
@@ -132,7 +120,7 @@ export function ClipList({
                     placeholder="Details (will be enhanced by server on upload)…"
                     rows={c.details ? 3 : 2}
                     value={c.details || ""}
-                    onChange={(e) => onUpdate(c.id, { details: e.target.value })}
+                    onChange={(e) => updateClip(c.id, { details: e.target.value })}
                   />
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -153,7 +141,7 @@ export function ClipList({
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         const val = (e.target as HTMLInputElement).value.trim();
-                        if (val) onUpdate(c.id, { tags: [...(c.tags || []), val] });
+                        if (val) updateClip(c.id, { tags: [...(c.tags || []), val] });
                         (e.target as HTMLInputElement).value = "";
                       }
                     }}
@@ -165,28 +153,28 @@ export function ClipList({
                 <div className="flex items-center justify-end gap-2">
                   {playingId === c.id ? (
                     <button
-                      onClick={onStop}
+                    onClick={stopPlayback}
                       className="rounded-full border px-3 py-2 text-sm flex items-center gap-2"
                     >
                       <StopIcon /> Stop
                     </button>
                   ) : (
                     <button
-                      onClick={() => onPlay(c)}
+                      onClick={() => playClip(c)}
                       className="rounded-full border px-3 py-2 text-sm flex items-center gap-2"
                     >
                       <PlayIcon /> Play
                     </button>
                   )}
                   <button
-                    onClick={() => onUpload(c)}
+                    onClick={() => uploadClip(c)}
                     disabled={c.status === "processing"}
                     className="rounded-full bg-slate-900 text-white px-3 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
                   >
                     <UploadIcon /> Upload
                   </button>
                   <button
-                    onClick={() => onDelete(c.id)}
+                    onClick={() => removeClip(c.id)}
                     className="rounded-full border px-3 py-2 text-sm flex items-center gap-2"
                   >
                     <TrashIcon /> Delete
