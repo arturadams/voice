@@ -12,7 +12,9 @@ import {
   TagIcon,
 } from "./icons";
 import { Clip, toClipStatus } from "./models/clip";
-import type { ApiConfig, StorageService, UploadService } from "./services/types";
+import type { ApiConfig, ClipStore, UploadService } from "./services/types";
+import { ClipList } from "./components/clip-list";
+import { RecordingControl } from "./components/recording-control";
 
 const fmt = {
   pad(n: number) {
@@ -34,7 +36,7 @@ export default function App({
   storage,
   uploader,
 }: {
-  storage: StorageService;
+  storage: ClipStore;
   uploader: UploadService;
 }) {
   const [api, setApi] = useState<ApiConfig>(() => {
@@ -477,6 +479,8 @@ export default function App({
       </header>
 
       <main className="mx-auto max-w-5xl px-4 py-6">
+        <RecordingControl storage={storage} />
+        <ClipList storage={storage} />
         <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <div className="p-4 sm:p-6 flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">

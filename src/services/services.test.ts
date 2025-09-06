@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { IndexedDbStorage } from './indexed-db';
 import { HttpUploader } from './http-uploader';
 import { Clip } from '../models/clip';
-import { ApiConfig, StorageService, UploadResult, UploadService } from './types';
+import { ApiConfig, ClipReader, ClipWriter, UploadResult, UploadService } from './types';
 
 function setupIndexedDb() {
   const store = new Map<string, any>();
@@ -47,7 +47,7 @@ function setupIndexedDb() {
 }
 setupIndexedDb();
 
-class MockStorage implements StorageService {
+class MockStorage implements ClipReader, ClipWriter {
   private store = new Map<string, Clip>();
   async save(clip: Clip): Promise<void> { this.store.set(clip.id, clip); }
   async getAll(): Promise<Clip[]> { return Array.from(this.store.values()); }
@@ -68,19 +68,21 @@ const clip: Clip = {
   blob: new Blob(['test'], { type: 'text/plain' })
 };
 
-async function exerciseStorage(service: StorageService) {
-  await service.save(clip);
-  const all = await service.getAll();
+async function exerciseStorage(reader: ClipReader, writer: ClipWriter) {
+  await writer.save(clip);
+  const all = await reader.getAll();
   assert.equal(all.length, 1);
   assert.equal(all[0].id, clip.id);
-  await service.remove(clip.id);
-  const after = await service.getAll();
+  await writer.remove(clip.id);
+  const after = await reader.getAll();
   assert.equal(after.length, 0);
 }
 
-test('StorageService allows swapping implementations', async () => {
-  await exerciseStorage(new IndexedDbStorage());
-  await exerciseStorage(new MockStorage());
+test('Clip storage allows swapping implementations', async () => {
+  const real = new IndexedDbStorage();
+  await exerciseStorage(real, real);
+  const mock = new MockStorage();
+  await exerciseStorage(mock, mock);
 });
 
 async function exerciseUploader(service: UploadService) {
