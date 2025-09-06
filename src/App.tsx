@@ -12,7 +12,7 @@ import {
   TagIcon,
 } from "./icons";
 import { Clip, toClipStatus } from "./models/clip";
-import type { ApiConfig, StorageService, UploadService } from "./services/types";
+import type { ApiConfig, ClipStore, UploadService } from "./services/types";
 
 const fmt = {
   pad(n: number) {
@@ -34,7 +34,7 @@ export default function App({
   storage,
   uploader,
 }: {
-  storage: StorageService;
+  storage: ClipStore;
   uploader: UploadService;
 }) {
   const [api, setApi] = useState<ApiConfig>(() => {

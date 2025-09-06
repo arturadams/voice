@@ -1,24 +1,29 @@
 import { Clip } from "../models/clip";
 
-export interface StorageService {
+export interface ClipWriter {
   /**
    * Save or update a clip.
    * @pre clip.id is a non-empty string.
-   * @post the clip can be retrieved via `getAll()`.
+   * @post the clip can be retrieved via `ClipReader.getAll()`.
    */
   save(clip: Clip): Promise<void>;
+  /**
+   * Remove a clip by its id.
+   * @pre `id` is a non-empty string.
+   * @post the clip is no longer returned by `ClipReader.getAll()`.
+   */
+  remove(id: string): Promise<void>;
+}
+
+export interface ClipReader {
   /**
    * Retrieve all persisted clips.
    * @post the returned array contains every clip previously saved.
    */
   getAll(): Promise<Clip[]>;
-  /**
-   * Remove a clip by its id.
-   * @pre `id` is a non-empty string.
-   * @post the clip is no longer returned by `getAll()`.
-   */
-  remove(id: string): Promise<void>;
 }
+
+export type ClipStore = ClipReader & ClipWriter;
 
 export type ApiConfig = {
   baseUrl: string;

@@ -1,6 +1,6 @@
 import { Clip } from "../models/clip";
 import { assertNonEmpty } from "./assert";
-import { StorageService } from "./types";
+import { ClipStore } from "./types";
 
 const DB_NAME = "voice-notes-db";
 const STORE = "clips";
@@ -20,7 +20,7 @@ async function openDb(): Promise<IDBDatabase> {
   });
 }
 
-export class IndexedDbStorage implements StorageService {
+export class IndexedDbStorage implements ClipStore {
   /**
    * @inheritdoc
    */
