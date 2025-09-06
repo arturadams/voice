@@ -389,54 +389,81 @@ export default function App() {
     pollingRef.current.delete(id);
   }
 
-  async function fetchServerStatus(c: Clip) {
-    if (!c.serverId) return false;
+  async function fetchServerStatus(c: Clip): Promise<{ done: boolean; nextDelayMs: number }> {
+    if (!c.serverId) return { done: false, nextDelayMs: 3000 };
+
     try {
       const res = await fetch(
-        notesUrl(api.baseUrl, api.uploadPath + "/status", { job: c.serverId! /* , ...(api.authToken ? { token: api.authToken } : {}) */ }), { method: 'POST' }
+        notesUrl(api.baseUrl, api.uploadPath + "/status", { job: c.serverId! }),
+        { method: "POST" }
       );
-      if (res.status === 404) return false;
-      if (!res.ok) return false;
+
+      const retryHdr = res.headers.get("Retry-After");
+      const retryAfterMs = retryHdr ? Math.max(1000, Number(retryHdr) * 1000) : 0;
+
+      if (res.status === 404) {
+        // treat as "not yet registered" race
+        return { done: false, nextDelayMs: Math.max(retryAfterMs, 2000) };
+      }
+
+      if (!res.ok) {
+        // transient error
+        return { done: false, nextDelayMs: Math.max(retryAfterMs, 4000) };
+      }
 
       const data = await res.json();
-      const status = toClipStatus(data.status);
+
+      // fold in partial metadata while waiting
       updateClip(c.id, {
-        status,
         title: data.title ?? c.title,
         tags: Array.isArray(data.tags) ? data.tags : c.tags,
         details: data.details ?? c.details,
-        transcriptUrl: data.transcriptUrl ?? c.transcriptUrl
+        transcriptUrl: data.transcriptUrl ?? c.transcriptUrl,
       });
-      if (status === "uploaded") {
+
+      if (res.status === 200 && data.status === "done") {
+        updateClip(c.id, { status: "uploaded" });
         stopWatcher(c.id);
-        return true;
+        return { done: true, nextDelayMs: 0 };
       }
-    } catch { }
-    return false;
+
+      const bodyRetryMs =
+        typeof data.retryAfter === "number" ? Math.max(1000, data.retryAfter * 1000) : 0;
+
+      return { done: false, nextDelayMs: Math.max(retryAfterMs, bodyRetryMs, 2500) };
+    } catch {
+      return { done: false, nextDelayMs: 5000 };
+    }
   }
 
   function startWatcher(c: Clip) {
     if (!c.serverId) return;
     stopWatcher(c.id);
 
-    let delay = 0; // first tick now
+    let delay = 1500; // small initial wait avoids early 404s
+
     const tick = async () => {
       if (!navigator.onLine || document.hidden) {
         schedule(Math.max(delay, 3000));
         return;
       }
-      const done = await fetchServerStatus(c);
+
+      const { done, nextDelayMs } = await fetchServerStatus(c);
       if (!done) {
-        delay = delay ? Math.min(Math.floor(delay * 1.6), 60000) : 3000;
-        schedule(delay);
+        delay = nextDelayMs || Math.min(Math.floor(delay * 1.6), 60000);
+        const jitter = Math.floor(Math.random() * 400);
+        schedule(delay + jitter);
       }
     };
-    function schedule(d: number) {
-      const handle = window.setTimeout(tick, d);
-      pollingRef.current.set(c.id, { delay: d, handle });
+
+    function schedule(ms: number) {
+      const handle = window.setTimeout(tick, ms);
+      pollingRef.current.set(c.id, { delay: ms, handle });
     }
+
     schedule(delay);
   }
+
 
   useEffect(() => {
     clips.filter(x => x.status === "processing" && x.serverId).forEach(startWatcher);
