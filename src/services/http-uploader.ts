@@ -1,13 +1,14 @@
 import { Clip } from "../models/clip";
+import { assertNonEmpty } from "./assert";
 import { ApiConfig, UploadResult, UploadService } from "./types";
 
-function joinUrl(base: string, path: string) {
+function joinUrl(base: string, path: string): string {
   const b = (base || "").replace(/\/+$/, "");
   const p = (path || "").replace(/^\/+/, "");
   return `${b}/${p}`;
 }
 
-function notesUrl(base: string, uploadPath: string) {
+function notesUrl(base: string, uploadPath: string): string {
   const p = ("/" + (uploadPath || "/notes").replace(/^\/+/, "")).replace(/\/+$/, "");
   const full = joinUrl(base, p);
   const u = new URL(full);
@@ -15,7 +16,13 @@ function notesUrl(base: string, uploadPath: string) {
 }
 
 export class HttpUploader implements UploadService {
+  /**
+   * @inheritdoc
+   */
   async upload(clip: Clip, api: ApiConfig): Promise<UploadResult> {
+    assertNonEmpty(clip.id, "clip.id");
+    assertNonEmpty(api.baseUrl, "api.baseUrl");
+    assertNonEmpty(api.uploadPath, "api.uploadPath");
     const blob = clip.blob;
     if (!blob) throw new Error("Audio blob not found");
 

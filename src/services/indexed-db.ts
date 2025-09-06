@@ -1,4 +1,5 @@
 import { Clip } from "../models/clip";
+import { assertNonEmpty } from "./assert";
 import { StorageService } from "./types";
 
 const DB_NAME = "voice-notes-db";
@@ -20,7 +21,11 @@ async function openDb(): Promise<IDBDatabase> {
 }
 
 export class IndexedDbStorage implements StorageService {
+  /**
+   * @inheritdoc
+   */
   async save(clip: Clip): Promise<void> {
+    assertNonEmpty(clip.id, "clip.id");
     const db = await openDb();
     return new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE, "readwrite");
@@ -32,6 +37,9 @@ export class IndexedDbStorage implements StorageService {
     });
   }
 
+  /**
+   * @inheritdoc
+   */
   async getAll(): Promise<Clip[]> {
     const db = await openDb();
     return new Promise((resolve, reject) => {
@@ -43,7 +51,11 @@ export class IndexedDbStorage implements StorageService {
     });
   }
 
+  /**
+   * @inheritdoc
+   */
   async remove(id: string): Promise<void> {
+    assertNonEmpty(id, "id");
     const db = await openDb();
     return new Promise<void>((resolve, reject) => {
       const tx = db.transaction(STORE, "readwrite");
