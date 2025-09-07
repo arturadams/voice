@@ -52,12 +52,12 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
               onChange={(e) => onApiChange((x) => ({ ...x, authToken: e.target.value }))}
             />
           </div>
-          <div className="pt-2 flex items-center gap-2">
+          <div className="pt-2 flex items-center space-x-2">
             <button
               onClick={onClose}
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm"
+              className="inline-flex items-center space-x-2 rounded-xl bg-slate-900 text-white px-4 py-2 text-sm"
             >
-              <SaveIcon /> Save
+              <SaveIcon /> <span>Save</span>
             </button>
             <button
               onClick={async () => {
@@ -68,9 +68,9 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
                   alert(e.message || String(e));
                 }
               }}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm"
+              className="inline-flex items-center space-x-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm"
             >
-              Test endpoint
+              <span>Test endpoint</span>
             </button>
           </div>
           <div className="text-xs text-slate-500 pt-2">

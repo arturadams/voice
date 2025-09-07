@@ -29,7 +29,7 @@ export function ClipList() {
 
   return (
     <>
-      <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="mt-6 flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
         <div className="flex-1">
           <div className="relative">
             <input
@@ -48,17 +48,17 @@ export function ClipList() {
         </span>
         <button
           onClick={syncQueued}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:shadow-sm"
+          className="inline-flex items-center space-x-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:shadow-sm"
           title="Upload any notes queued while offline"
         >
-          Sync queued
+          <span>Sync queued</span>
         </button>
         <button
           onClick={refreshMetadata}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:shadow-sm"
+          className="inline-flex items-center space-x-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:shadow-sm"
           title="Pull latest tags/titles from server"
         >
-          Refresh
+          <span>Refresh</span>
         </button>
         <button
           onClick={async () => {
@@ -67,9 +67,9 @@ export function ClipList() {
               await uploadClip(c);
             }
           }}
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:shadow-sm"
+          className="inline-flex items-center space-x-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:shadow-sm"
         >
-          Upload all
+          <span>Upload all</span>
         </button>
       </div>
 
@@ -83,8 +83,8 @@ export function ClipList() {
             className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden"
           >
             <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-12 gap-4">
-              <div className="sm:col-span-8 flex flex-col gap-2 min-w-0">
-                <div className="flex items-center gap-2">
+              <div className="sm:col-span-8 flex flex-col space-y-2 min-w-0">
+                <div className="flex items-center space-x-2">
                   <input
                     className="min-w-0 flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium"
                     value={c.title || "Untitled note"}
@@ -94,22 +94,22 @@ export function ClipList() {
                     {fmt.date(c.createdAt)}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="text-xs text-slate-500">
+                <div className="flex flex-wrap items-center -m-1">
+                  <div className="m-1 text-xs text-slate-500">
                     {c.mimeType.replace("audio/", "").toUpperCase()} • {c.duration ? `${c.duration.toFixed(1)}s` : "--"} • {c.size ? `${(c.size / 1024).toFixed(0)} KB` : "--"}
                   </div>
                   {c.status === "uploaded" && (
-                    <span className="text-xs rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5">
+                    <span className="m-1 text-xs rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5">
                       Synced
                     </span>
                   )}
                   {c.status === "processing" && (
-                    <span className="text-xs rounded-full bg-amber-50 text-amber-700 px-2 py-0.5">
+                    <span className="m-1 text-xs rounded-full bg-amber-50 text-amber-700 px-2 py-0.5">
                       Uploading…
                     </span>
                   )}
                   {c.status === "error" && (
-                    <span className="text-xs rounded-full bg-rose-50 text-rose-700 px-2 py-0.5">
+                    <span className="m-1 text-xs rounded-full bg-rose-50 text-rose-700 px-2 py-0.5">
                       Error
                     </span>
                   )}
@@ -123,20 +123,20 @@ export function ClipList() {
                     onChange={(e) => updateClip(c.id, { details: e.target.value })}
                   />
                 </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <div className="flex items-center gap-1 text-xs text-slate-500">
+                <div className="flex flex-wrap items-center -m-1">
+                  <div className="m-1 flex items-center space-x-1 text-xs text-slate-500">
                     <TagIcon /> Tags:
                   </div>
                   {(c.tags || []).map((t, idx) => (
                     <span
                       key={t + idx}
-                      className="rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 text-xs"
+                      className="m-1 rounded-full bg-slate-100 text-slate-700 px-2 py-0.5 text-xs"
                     >
                       {t}
                     </span>
                   ))}
                   <input
-                    className="rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
+                    className="m-1 rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs"
                     placeholder="Add tag and press Enter"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -149,19 +149,19 @@ export function ClipList() {
                 </div>
               </div>
 
-              <div className="sm:col-span-4 flex flex-col items-stretch justify-between gap-3">
-                <div className="flex items-center justify-end gap-2">
+              <div className="sm:col-span-4 flex flex-col items-stretch justify-between space-y-3">
+                <div className="flex flex-wrap items-center justify-start sm:justify-end -m-1">
                   {playingId === c.id ? (
                     <button
-                    onClick={stopPlayback}
-                      className="rounded-full border px-3 py-2 text-sm flex items-center gap-2"
+                      onClick={stopPlayback}
+                      className="m-1 rounded-full border px-3 py-2 text-sm flex items-center space-x-2"
                     >
                       <StopIcon /> Stop
                     </button>
                   ) : (
                     <button
                       onClick={() => playClip(c)}
-                      className="rounded-full border px-3 py-2 text-sm flex items-center gap-2"
+                      className="m-1 rounded-full border px-3 py-2 text-sm flex items-center space-x-2"
                     >
                       <PlayIcon /> Play
                     </button>
@@ -170,14 +170,14 @@ export function ClipList() {
                     <button
                       onClick={() => uploadClip(c)}
                       disabled={c.status === "processing"}
-                      className="rounded-full bg-slate-900 text-white px-3 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
+                      className="m-1 rounded-full bg-slate-900 text-white px-3 py-2 text-sm flex items-center space-x-2 disabled:opacity-50"
                     >
                       <UploadIcon /> Upload
                     </button>
                   )}
                   <button
                     onClick={() => removeClip(c.id)}
-                    className="rounded-full border px-3 py-2 text-sm flex items-center gap-2"
+                    className="m-1 rounded-full border px-3 py-2 text-sm flex items-center space-x-2"
                   >
                     <TrashIcon /> Delete
                   </button>

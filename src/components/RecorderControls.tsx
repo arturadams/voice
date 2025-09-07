@@ -74,17 +74,22 @@ export function RecorderControls() {
         analyserRef.current = null;
         const size = blob.size;
         const objectUrl = URL.createObjectURL(blob);
-        const duration = await probeDurationFromBlob(blob);
+        let duration = 0;
+        try {
+          duration = await probeDurationFromBlob(blob);
+        } catch (err) {
+          console.warn("failed to probe duration", err);
+        }
         const saved: Clip = { ...newClip, blob, objectUrl, size, duration, status: "saved" };
         await storage.save(saved);
         addClip(saved);
         setRecordingClip(null);
-        setRecordMs(0);
       } catch (e) {
         console.error(e);
         setRecordingClip((c) => (c ? { ...c, status: "error" } : c));
       } finally {
         stream.getTracks().forEach((t) => t.stop());
+        setRecordMs(0);
       }
     };
     mr.start(200);
@@ -151,7 +156,12 @@ export function RecorderControls() {
   }
   function stopRecording() {
     if (!recorder) return;
-    recorder.stream.getTracks().forEach((t) => t.stop());
+    // Ensure any pending data is flushed before stopping so Chrome captures it
+    try {
+      recorder.requestData();
+    } catch {
+      /* noop */
+    }
     recorder.stop();
     setRecorder(null);
     recordStartRef.current = null;
@@ -159,8 +169,8 @@ export function RecorderControls() {
   }
   async function cancelRecording() {
     if (!recorder) return;
-    recorder.stream.getTracks().forEach((t) => t.stop());
     recorder.stop();
+    recorder.stream.getTracks().forEach((t) => t.stop());
     setRecorder(null);
     setRecordingClip(null);
     recordStartRef.current = null;
@@ -189,40 +199,40 @@ export function RecorderControls() {
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-      <div className="p-4 sm:p-6 flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+      <div className="p-4 sm:p-6 flex flex-col space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-semibold">New recording</h2>
             <p className="text-sm text-slate-500">
               Tap to start. Works best over HTTPS and with a user gesture.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center -m-1">
             {!isRecording && (
               <button
                 onClick={startRecording}
-                className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-5 py-3 text-sm shadow hover:opacity-95"
+                className="m-1 inline-flex items-center space-x-2 rounded-full bg-slate-900 text-white px-5 py-3 text-sm shadow hover:opacity-95"
               >
-                <MicIcon /> Start
+                <MicIcon /> <span>Start</span>
               </button>
             )}
             {isRecording && recorder?.state === "recording" && (
               <>
                 <button
                   onClick={pauseRecording}
-                  className="rounded-full border px-4 py-2 text-sm flex items-center gap-2"
+                  className="m-1 rounded-full border px-4 py-2 text-sm flex items-center space-x-2"
                 >
-                  <PauseIcon /> Pause
+                  <PauseIcon /> <span>Pause</span>
                 </button>
                 <button
                   onClick={stopRecording}
-                  className="rounded-full bg-emerald-600 text-white px-4 py-2 text-sm flex items-center gap-2"
+                  className="m-1 rounded-full bg-emerald-600 text-white px-4 py-2 text-sm flex items-center space-x-2"
                 >
-                  <StopIcon /> Stop & Save
+                  <StopIcon /> <span>Stop & Save</span>
                 </button>
                 <button
                   onClick={cancelRecording}
-                  className="rounded-full border px-4 py-2 text-sm"
+                  className="m-1 rounded-full border px-4 py-2 text-sm"
                 >
                   Cancel
                 </button>
@@ -232,19 +242,19 @@ export function RecorderControls() {
               <>
                 <button
                   onClick={resumeRecording}
-                  className="rounded-full bg-slate-900 text-white px-4 py-2 text-sm flex items-center gap-2"
+                  className="m-1 rounded-full bg-slate-900 text-white px-4 py-2 text-sm flex items-center space-x-2"
                 >
-                  <PlayIcon /> Resume
+                  <PlayIcon /> <span>Resume</span>
                 </button>
                 <button
                   onClick={stopRecording}
-                  className="rounded-full bg-emerald-600 text-white px-4 py-2 text-sm flex items-center gap-2"
+                  className="m-1 rounded-full bg-emerald-600 text-white px-4 py-2 text-sm flex items-center space-x-2"
                 >
-                  <StopIcon /> Stop & Save
+                  <StopIcon /> <span>Stop & Save</span>
                 </button>
                 <button
                   onClick={cancelRecording}
-                  className="rounded-full border px-4 py-2 text-sm"
+                  className="m-1 rounded-full border px-4 py-2 text-sm"
                 >
                   Cancel
                 </button>
