@@ -1,6 +1,7 @@
 import { SaveIcon } from "../icons";
 import type { ApiConfig } from "../services/types";
 import { notesUrl } from "../utils/api";
+import { useTheme, type Theme } from "../context/theme";
 
 interface SettingsModalProps {
   api: ApiConfig;
@@ -9,6 +10,7 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps) {
+  const { theme, setTheme } = useTheme();
   return (
     <div
       className="fixed inset-0 z-20 flex items-center justify-center bg-base/40 p-4"
@@ -19,12 +21,24 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b border-muted flex items-center justify-between">
-          <h3 className="font-semibold">Connection</h3>
+          <h3 className="font-semibold">Settings</h3>
           <button onClick={onClose} className="text-muted hover:text-content">
             ✕
           </button>
         </div>
         <div className="p-4 space-y-3">
+          <div>
+            <label className="text-xs text-muted">Theme</label>
+            <select
+              className="w-full rounded-xl border border-muted bg-base px-3 py-2 text-sm"
+              value={theme}
+              onChange={(e) => setTheme(e.target.value as Theme)}
+            >
+              <option value="standard">Standard</option>
+              <option value="dark">Dark</option>
+              <option value="neon">Neon</option>
+            </select>
+          </div>
           <div>
             <label className="text-xs text-muted">Base URL</label>
             <input
