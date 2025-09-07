@@ -188,7 +188,7 @@ export function RecorderControls() {
   const isRecording = recorder && ["recording", "paused"].includes(recorder.state);
 
   return (
-    <section className="rounded-2xl border border-muted bg-surface shadow-sm overflow-hidden">
+    <section className="rounded-2xl border border-subtle bg-surface shadow-sm overflow-hidden">
       <div className="p-4 sm:p-6 flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1 min-w-0">
@@ -210,7 +210,7 @@ export function RecorderControls() {
               <>
                 <button
                   onClick={pauseRecording}
-                  className="rounded-full border border-muted px-4 py-2 text-sm flex items-center gap-2"
+                  className="rounded-full border border-subtle px-4 py-2 text-sm flex items-center gap-2"
                 >
                   <PauseIcon /> Pause
                 </button>
@@ -222,7 +222,7 @@ export function RecorderControls() {
                 </button>
                 <button
                   onClick={cancelRecording}
-                  className="rounded-full border border-muted px-4 py-2 text-sm"
+                  className="rounded-full border border-subtle px-4 py-2 text-sm"
                 >
                   Cancel
                 </button>
@@ -244,7 +244,7 @@ export function RecorderControls() {
                 </button>
                 <button
                   onClick={cancelRecording}
-                  className="rounded-full border border-muted px-4 py-2 text-sm"
+                  className="rounded-full border border-subtle px-4 py-2 text-sm"
                 >
                   Cancel
                 </button>
@@ -255,7 +255,7 @@ export function RecorderControls() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
           <div className="sm:col-span-2">
-            <div className="rounded-xl border border-muted bg-surface p-3">
+            <div className="rounded-xl border border-subtle bg-surface p-3">
               <canvas ref={canvasRef} className="w-full h-24" width={800} height={96} />
             </div>
           </div>
