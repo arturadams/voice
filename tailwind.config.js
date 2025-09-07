@@ -5,6 +5,8 @@ export default {
         extend: {
             colors: {
                 base: 'var(--color-base)',
+                content: 'var(--color-content)',
+                muted: 'var(--color-muted)',
                 primary: 'var(--color-primary)',
                 secondary: 'var(--color-secondary)',
                 accent: 'var(--color-accent)',

@@ -261,19 +261,19 @@ export default function App() {
   }, [clips]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 text-slate-900">
-      <header className="sticky top-0 z-10 backdrop-blur bg-white/70 border-b border-slate-200">
+    <div className="min-h-screen bg-gradient-to-b from-base via-base to-base text-content">
+      <header className="sticky top-0 z-10 backdrop-blur bg-base/70 border-b border-muted">
         <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow">
+          <div className="w-9 h-9 rounded-xl bg-primary text-base flex items-center justify-center shadow">
             <MicIcon size={18} />
           </div>
           <div className="flex-1">
             <h1 className="text-lg font-semibold leading-tight">Velvet Notes</h1>
-            <p className="text-xs text-slate-500">Premium voice notes — record, tag, and sync</p>
+            <p className="text-xs text-muted">Premium voice notes — record, tag, and sync</p>
           </div>
           <button
             onClick={() => setShowSettings(true)}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:shadow-sm"
+            className="inline-flex items-center gap-2 rounded-xl border border-muted bg-base px-3 py-2 text-sm hover:shadow-sm"
           >
             <SettingsIcon /> Settings
           </button>
@@ -292,7 +292,7 @@ export default function App() {
         <SettingsModal api={api} onApiChange={setApi} onClose={() => setShowSettings(false)} />
       )}
 
-      <footer className="py-10 text-center text-xs text-slate-400">
+      <footer className="py-10 text-center text-xs text-muted">
         Built with ❤️ — works in modern browsers. For iOS Safari, ensure you serve over HTTPS and
         tap to start recording.
       </footer>
