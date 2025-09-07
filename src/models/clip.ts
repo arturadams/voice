@@ -22,6 +22,7 @@ export type Clip = {
   details?: string;
   serverId?: string;
   transcriptUrl?: string;
+  transcriptText?: string;
   status: ClipStatus;
   blob?: Blob;
   objectUrl?: string;
