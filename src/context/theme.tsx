@@ -11,7 +11,7 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 const THEMES: Theme[] = ['standard', 'dark', 'neon'];
 const THEME_COLORS: Record<Theme, string> = {
-  standard: '#ffffff',
+  standard: '#f8fafc',
   dark: '#0f172a',
   neon: '#000000',
 };

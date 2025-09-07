@@ -1,6 +1,6 @@
 @layer base {
   .theme-standard {
-    --color-base: #ffffff;
+    --color-base: #f8fafc;
     --color-content: #0f172a;
     --color-muted: #e2e8f0;
     --color-primary: #1d4ed8;
