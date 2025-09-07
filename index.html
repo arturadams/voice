@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="theme-standard">
 
 <head>
   <meta charset="UTF-8" />
@@ -8,11 +8,11 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="theme-color" content="#ffffff" />
+  <meta name="theme-color" content="#f8fafc" />
   <script>
     (function () {
       const theme = localStorage.getItem('theme') || 'standard';
-      const colors = { standard: '#ffffff', dark: '#0f172a', neon: '#000000' };
+      const colors = { standard: '#f8fafc', dark: '#0f172a', neon: '#000000' };
       document.documentElement.classList.add('theme-' + theme);
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute('content', colors[theme]);
