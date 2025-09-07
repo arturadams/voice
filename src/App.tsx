@@ -161,7 +161,7 @@ export default function App() {
   }
 
   function addClip(clip: Clip) {
-    setClips((prev) => [clip, ...prev]);
+    setClips((prev) => (prev.some((c) => c.id === clip.id) ? prev : [clip, ...prev]));
   }
 
   const clipContextValue = {
