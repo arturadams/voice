@@ -104,11 +104,14 @@ export function RecorderControls() {
       rafRef.current = requestAnimationFrame(render);
       analyser.getByteTimeDomainData(dataArray);
       const { width, height } = canvas;
+      const styles = getComputedStyle(document.documentElement);
+      const baseColor = styles.getPropertyValue("--color-base").trim();
+      const primaryColor = styles.getPropertyValue("--color-primary").trim();
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.fillStyle = baseColor;
       ctx.fillRect(0, 0, width, height);
       ctx.lineWidth = 2;
-      ctx.strokeStyle = "#111827";
+      ctx.strokeStyle = primaryColor;
       ctx.beginPath();
       const sliceWidth = (width * 1.0) / bufferLength;
       let x = 0;
@@ -256,7 +259,7 @@ export function RecorderControls() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
           <div className="sm:col-span-2">
             <div className="rounded-xl border border-subtle bg-surface p-3">
-              <canvas ref={canvasRef} className="w-full h-24" width={800} height={96} />
+              <canvas ref={canvasRef} className="w-full h-24 bg-base" width={800} height={96} />
             </div>
           </div>
           <div className="text-center">
