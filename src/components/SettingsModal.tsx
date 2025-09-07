@@ -17,7 +17,7 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-2xl bg-base shadow-xl border border-muted"
+        className="w-full max-w-lg rounded-2xl bg-surface shadow-xl border border-muted"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b border-muted flex items-center justify-between">
@@ -30,7 +30,7 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
           <div>
             <label className="text-xs text-muted">Theme</label>
             <select
-              className="w-full rounded-xl border border-muted bg-base px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-muted bg-surface px-3 py-2 text-sm"
               value={theme}
               onChange={(e) => setTheme(e.target.value as Theme)}
             >
@@ -42,7 +42,7 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
           <div>
             <label className="text-xs text-muted">Base URL</label>
             <input
-              className="w-full rounded-xl border border-muted bg-base px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-muted bg-surface px-3 py-2 text-sm"
               placeholder="https://api.example.com"
               value={api.baseUrl}
               onChange={(e) => onApiChange((x) => ({ ...x, baseUrl: e.target.value }))}
@@ -51,7 +51,7 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
           <div>
             <label className="text-xs text-muted">Upload Path</label>
             <input
-              className="w-full rounded-xl border border-muted bg-base px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-muted bg-surface px-3 py-2 text-sm"
               placeholder="/notes"
               value={api.uploadPath}
               onChange={(e) => onApiChange((x) => ({ ...x, uploadPath: e.target.value }))}
@@ -60,7 +60,7 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
           <div>
             <label className="text-xs text-muted">Auth Token (optional)</label>
             <input
-              className="w-full rounded-xl border border-muted bg-base px-3 py-2 text-sm"
+              className="w-full rounded-xl border border-muted bg-surface px-3 py-2 text-sm"
               placeholder="Bearer token"
               value={api.authToken || ""}
               onChange={(e) => onApiChange((x) => ({ ...x, authToken: e.target.value }))}
@@ -82,7 +82,7 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
                   alert(e.message || String(e));
                 }
               }}
-              className="inline-flex items-center gap-2 rounded-xl border border-muted bg-base px-4 py-2 text-sm"
+              className="inline-flex items-center gap-2 rounded-xl border border-muted bg-surface px-4 py-2 text-sm"
             >
               Test endpoint
             </button>

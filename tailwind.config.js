@@ -6,6 +6,7 @@ export default {
         extend: {
             colors: {
                 base: 'var(--color-base)',
+                surface: 'var(--color-surface)',
                 content: 'var(--color-content)',
                 muted: 'var(--color-muted)',
                 primary: 'var(--color-primary)',

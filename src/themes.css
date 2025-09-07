@@ -1,6 +1,7 @@
 @layer base {
   .theme-standard {
     --color-base: #f8fafc;
+    --color-surface: #ffffff;
     --color-content: #0f172a;
     --color-muted: #e2e8f0;
     --color-primary: #0f172a;
@@ -10,6 +11,7 @@
 
   .theme-dark {
     --color-base: #0f172a;
+    --color-surface: #1e293b;
     --color-content: #f8fafc;
     --color-muted: #334155;
     --color-primary: #3b82f6;
@@ -19,6 +21,7 @@
 
   .theme-neon {
     --color-base: #000000;
+    --color-surface: #111111;
     --color-content: #ffffff;
     --color-muted: #333333;
     --color-primary: #39ff14;

@@ -33,7 +33,7 @@ export function ClipList() {
         <div className="flex-1">
           <div className="relative">
             <input
-              className="w-full rounded-xl border border-muted bg-base px-4 py-2 pr-10 text-sm"
+              className="w-full rounded-xl border border-muted bg-surface px-4 py-2 pr-10 text-sm"
               placeholder="Search title, tags, details…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -48,14 +48,14 @@ export function ClipList() {
         </span>
         <button
           onClick={syncQueued}
-          className="inline-flex items-center gap-2 rounded-xl border border-muted bg-base px-3 py-2 text-sm hover:shadow-sm"
+          className="inline-flex items-center gap-2 rounded-xl border border-muted bg-surface px-3 py-2 text-sm hover:shadow-sm"
           title="Upload any notes queued while offline"
         >
           Sync queued
         </button>
         <button
           onClick={refreshMetadata}
-          className="inline-flex items-center gap-2 rounded-xl border border-muted bg-base px-3 py-2 text-sm hover:shadow-sm"
+          className="inline-flex items-center gap-2 rounded-xl border border-muted bg-surface px-3 py-2 text-sm hover:shadow-sm"
           title="Pull latest tags/titles from server"
         >
           Refresh
@@ -67,7 +67,7 @@ export function ClipList() {
               await uploadClip(c);
             }
           }}
-          className="inline-flex items-center gap-2 rounded-xl border border-muted bg-base px-3 py-2 text-sm hover:shadow-sm"
+          className="inline-flex items-center gap-2 rounded-xl border border-muted bg-surface px-3 py-2 text-sm hover:shadow-sm"
         >
           Upload all
         </button>
@@ -80,13 +80,13 @@ export function ClipList() {
         {filtered.map((c) => (
           <article
             key={c.id}
-            className="rounded-2xl border border-muted bg-base shadow-sm overflow-hidden"
+            className="rounded-2xl border border-muted bg-surface shadow-sm overflow-hidden"
           >
             <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-12 gap-4">
               <div className="sm:col-span-8 flex flex-col gap-2 min-w-0">
                 <div className="flex items-center gap-2">
                   <input
-                    className="min-w-0 flex-1 rounded-lg border border-muted bg-base px-3 py-2 text-sm font-medium"
+                    className="min-w-0 flex-1 rounded-lg border border-muted bg-surface px-3 py-2 text-sm font-medium"
                     value={c.title || "Untitled note"}
                     onChange={(e) => updateClip(c.id, { title: e.target.value })}
                   />
@@ -116,7 +116,7 @@ export function ClipList() {
                 </div>
                 <div>
                   <textarea
-                    className="w-full rounded-lg border border-muted bg-base px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-muted bg-surface px-3 py-2 text-sm"
                     placeholder="Details (will be enhanced by server on upload)…"
                     rows={c.details ? 3 : 2}
                     value={c.details || ""}
@@ -136,7 +136,7 @@ export function ClipList() {
                     </span>
                   ))}
                   <input
-                    className="rounded-lg border border-muted bg-base px-2 py-1 text-xs"
+                    className="rounded-lg border border-muted bg-surface px-2 py-1 text-xs"
                     placeholder="Add tag and press Enter"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
