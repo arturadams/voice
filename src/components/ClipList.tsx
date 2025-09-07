@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { PlayIcon, StopIcon, UploadIcon, TrashIcon, TagIcon } from "../icons";
 import { fmt } from "../utils/fmt";
 import { useClips } from "../context/clips";
+import { TranscriptModal } from "./TranscriptModal";
+import type { Clip } from "../models/clip";
 
 export function ClipList() {
   const {
@@ -15,8 +17,26 @@ export function ClipList() {
     updateClip,
     syncQueued,
     refreshMetadata,
+    fetchTranscript,
   } = useClips();
   const [search, setSearch] = useState("");
+  const [transcriptClip, setTranscriptClip] = useState<Clip | null>(null);
+
+  async function openTranscript(c: Clip) {
+    if (!c.transcriptText) {
+      if (!navigator.onLine && c.transcriptUrl) {
+        alert("Not available offline yet");
+        return;
+      }
+      const text = await fetchTranscript(c);
+      if (!text && !c.transcriptText) {
+        if (!navigator.onLine) alert("Not available offline yet");
+        return;
+      }
+    }
+    const latest = clips.find((x) => x.id === c.id) || c;
+    setTranscriptClip(latest);
+  }
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     if (!q) return clips;
@@ -38,7 +58,9 @@ export function ClipList() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">/</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
+              /
+            </span>
           </div>
         </div>
         <span
@@ -96,7 +118,9 @@ export function ClipList() {
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <div className="text-xs text-slate-500">
-                    {c.mimeType.replace("audio/", "").toUpperCase()} • {c.duration ? `${c.duration.toFixed(1)}s` : "--"} • {c.size ? `${(c.size / 1024).toFixed(0)} KB` : "--"}
+                    {c.mimeType.replace("audio/", "").toUpperCase()} •{" "}
+                    {c.duration ? `${c.duration.toFixed(1)}s` : "--"} •{" "}
+                    {c.size ? `${(c.size / 1024).toFixed(0)} KB` : "--"}
                   </div>
                   {c.status === "uploaded" && (
                     <span className="text-xs rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5">
@@ -153,7 +177,7 @@ export function ClipList() {
                 <div className="flex items-center justify-end gap-2">
                   {playingId === c.id ? (
                     <button
-                    onClick={stopPlayback}
+                      onClick={stopPlayback}
                       className="rounded-full border px-3 py-2 text-sm flex items-center gap-2"
                     >
                       <StopIcon /> Stop
@@ -183,15 +207,10 @@ export function ClipList() {
                   </button>
                 </div>
                 <div className="text-xs text-slate-500 overflow-hidden max-h-12">
-                  {c.transcriptUrl ? (
-                    <a
-                      className="text-slate-700 underline"
-                      href={c.transcriptUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
+                  {c.transcriptText || c.transcriptUrl || c.details ? (
+                    <button className="text-slate-700 underline" onClick={() => openTranscript(c)}>
                       Transcript
-                    </a>
+                    </button>
                   ) : (
                     <span className="text-slate-400">No transcript yet.</span>
                   )}
@@ -201,6 +220,9 @@ export function ClipList() {
           </article>
         ))}
       </section>
+      {transcriptClip && (
+        <TranscriptModal clip={transcriptClip} onClose={() => setTranscriptClip(null)} />
+      )}
     </>
   );
 }

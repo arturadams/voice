@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { MicIcon, SettingsIcon } from "./icons";
-import { Clip } from "./models/clip";
+import { Clip, ClipStatus } from "./models/clip";
 import type { ApiConfig } from "./services/types";
 import { useStorage, useUploader } from "./context/services";
 import { notesUrl } from "./utils/api";
@@ -88,16 +88,9 @@ export default function App() {
       if (!blob) throw new Error("Audio blob not found");
       updateClip(c.id, { status: "processing" });
       const result = await uploader.upload({ ...c, blob }, api);
-      updateClip(c.id, {
-        status: "processing",
-        serverId: result.serverId,
-        title: result.title ?? c.title,
-        tags: result.tags ?? c.tags,
-        details: result.details ?? c.details,
-        transcriptUrl: result.transcriptUrl ?? c.transcriptUrl,
-      });
-
-      const updated: Clip = { ...c, serverId: result.serverId, status: "processing" };
+      updateClip(c.id, { status: "processing", serverId: result.serverId });
+      const updated: Clip = { ...c, serverId: result.serverId, status: "processing" as ClipStatus };
+      applyServerMeta(updated, result);
       startWatcher(updated);
     } catch (e: any) {
       console.error(e);
@@ -114,21 +107,62 @@ export default function App() {
       return next;
     });
   }
+
+  async function fetchTranscript(c: Clip, url?: string): Promise<string | null> {
+    if (c.transcriptText) return c.transcriptText;
+    if (!c.transcriptUrl && c.details) {
+      updateClip(c.id, { transcriptText: c.details });
+      return c.details;
+    }
+    const tUrl = url || c.transcriptUrl;
+    if (!tUrl || !navigator.onLine) return null;
+    try {
+      const headers: Record<string, string> = {};
+      if (api.authToken) headers.Authorization = `Bearer ${api.authToken}`;
+      const res = await fetch(tUrl, { headers });
+      if (res.status === 200) {
+        const text = await res.text();
+        updateClip(c.id, { transcriptText: text });
+        return text;
+      }
+      // 202 -> not ready yet, let poller retry later
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+
+  function applyServerMeta(c: Clip, data: any) {
+    const patch: Partial<Clip> = {
+      title: data?.title ?? c.title,
+      tags: Array.isArray(data?.tags) ? data.tags : c.tags,
+      details: data?.details ?? c.details,
+      transcriptUrl: data?.transcriptUrl ?? c.transcriptUrl,
+    };
+    updateClip(c.id, patch);
+    const updated = { ...c, ...patch } as Clip;
+    if (!updated.transcriptText) {
+      if (updated.transcriptUrl && navigator.onLine) {
+        fetchTranscript(updated, updated.transcriptUrl);
+      } else if (!updated.transcriptUrl && updated.details) {
+        updateClip(updated.id, { transcriptText: updated.details });
+      }
+    }
+  }
   async function removeClip(id: string) {
     setClips((prev) => {
       const clip = prev.find((c) => c.id === id);
       if (clip?.objectUrl) {
         try {
           URL.revokeObjectURL(clip.objectUrl);
-        } catch {
-        }
+        } catch {}
       }
       return prev.filter((c) => c.id !== id);
     });
     await storage.remove(id);
   }
   async function syncQueued() {
-    for (const q of clips.filter(x => x.status === "queued")) {
+    for (const q of clips.filter((x) => x.status === "queued")) {
       // eslint-disable-next-line no-await-in-loop
       await uploadClip(q);
     }
@@ -137,22 +171,15 @@ export default function App() {
   async function refreshMetadata() {
     try {
       if (!navigator.onLine) return;
-      for (const c of clips.filter(x => x.serverId)) {
-        const res = await fetch(
-          notesUrl(api.baseUrl, api.uploadPath, { job: c.serverId! })
-        );
+      for (const c of clips.filter((x) => x.serverId)) {
+        const res = await fetch(notesUrl(api.baseUrl, api.uploadPath, { job: c.serverId! }));
         if (res.ok) {
           const data = await res.json();
           const serverId = data?.id || c.serverId;
-          updateClip(c.id, {
-            status: "processing",
-            serverId,
-            title: data?.title ?? c.title,
-            tags: Array.isArray(data?.tags) ? data.tags : c.tags,
-            details: data?.details ?? c.details,
-            transcriptUrl: data?.transcriptUrl ?? c.transcriptUrl,
-          });
-          startWatcher({ ...c, serverId, status: "processing" });
+          updateClip(c.id, { status: "processing", serverId });
+          const updated: Clip = { ...c, serverId, status: "processing" as ClipStatus };
+          applyServerMeta(updated, data);
+          startWatcher(updated);
         }
       }
     } catch (e) {
@@ -176,6 +203,7 @@ export default function App() {
     updateClip,
     syncQueued,
     refreshMetadata,
+    fetchTranscript,
   };
   const pollingRef = useRef(new Map<string, { delay: number; handle: number | null }>());
   function stopWatcher(id: string) {
@@ -206,12 +234,7 @@ export default function App() {
 
       const data = await res.json();
 
-      updateClip(c.id, {
-        title: data.title ?? c.title,
-        tags: Array.isArray(data.tags) ? data.tags : c.tags,
-        details: data.details ?? c.details,
-        transcriptUrl: data.transcriptUrl ?? c.transcriptUrl,
-      });
+      applyServerMeta(c, data);
 
       if (res.status === 200 && data.status === "done") {
         updateClip(c.id, { status: "uploaded" });
@@ -257,7 +280,7 @@ export default function App() {
   }
 
   useEffect(() => {
-    clips.filter(x => x.status === "processing" && x.serverId).forEach(startWatcher);
+    clips.filter((x) => x.status === "processing" && x.serverId).forEach(startWatcher);
   }, [clips]);
 
   return (
