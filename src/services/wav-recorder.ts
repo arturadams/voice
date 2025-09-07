@@ -53,7 +53,10 @@ export class WavRecorder {
     const wav = encodeWav(buffer, this.ctx.sampleRate);
     const blob = new Blob([wav], { type: 'audio/wav' });
     if (this.ondataavailable) {
-      this.ondataavailable(new BlobEvent('dataavailable', { data: blob }));
+      const event = typeof BlobEvent === 'function'
+        ? new BlobEvent('dataavailable', { data: blob })
+        : ({ data: blob } as BlobEvent);
+      this.ondataavailable(event);
     }
     if (this.onstop) this.onstop();
     this.ctx.close();
