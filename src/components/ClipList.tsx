@@ -15,6 +15,7 @@ export function ClipList() {
     updateClip,
     syncQueued,
     refreshMetadata,
+    viewTranscript,
   } = useClips();
   const [search, setSearch] = useState("");
   const filtered = useMemo(() => {
@@ -181,15 +182,13 @@ export function ClipList() {
                   </button>
                 </div>
                 <div className="text-xs text-slate-500 overflow-hidden max-h-12">
-                  {c.transcriptUrl ? (
-                    <a
+                  {c.transcriptText || c.transcriptUrl || c.details ? (
+                    <button
+                      onClick={() => viewTranscript(c)}
                       className="text-slate-700 underline"
-                      href={c.transcriptUrl}
-                      target="_blank"
-                      rel="noreferrer"
                     >
                       Transcript
-                    </a>
+                    </button>
                   ) : (
                     <span className="text-slate-400">No transcript yet.</span>
                   )}
