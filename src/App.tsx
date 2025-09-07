@@ -8,6 +8,7 @@ import { RecorderControls } from "./components/RecorderControls";
 import { ClipList } from "./components/ClipList";
 import { SettingsModal } from "./components/SettingsModal";
 import { ClipsProvider } from "./context/clips";
+import { TranscriptModal } from "./components/TranscriptModal";
 
 export default function App() {
   const storage = useStorage();
@@ -26,6 +27,7 @@ export default function App() {
   const [online, setOnline] = useState<boolean>(navigator.onLine);
   const [clips, setClips] = useState<Clip[]>([]);
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [transcriptClip, setTranscriptClip] = useState<Clip | null>(null);
   const audioElRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
@@ -73,6 +75,25 @@ export default function App() {
     setPlayingId(null);
   }
 
+  async function fetchTranscript(c: Clip, url: string): Promise<string | null> {
+    if (c.transcriptText || !navigator.onLine) return c.transcriptText || null;
+    try {
+      const res = await fetch(url, {
+        headers: api.authToken
+          ? { Authorization: `Bearer ${api.authToken}` }
+          : undefined,
+      });
+      if (res.status === 200) {
+        const text = await res.text();
+        updateClip(c.id, { transcriptText: text });
+        return text;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
   async function uploadClip(c: Clip) {
     try {
       if (!navigator.onLine) {
@@ -97,8 +118,23 @@ export default function App() {
         transcriptUrl: result.transcriptUrl ?? c.transcriptUrl,
       });
 
-      const updated: Clip = { ...c, serverId: result.serverId, status: "processing" };
-      startWatcher(updated);
+      const merged: Clip = {
+        ...c,
+        serverId: result.serverId,
+        status: "processing",
+        title: result.title ?? c.title,
+        tags: result.tags ?? c.tags,
+        details: result.details ?? c.details,
+        transcriptUrl: result.transcriptUrl ?? c.transcriptUrl,
+      };
+
+      if (!merged.transcriptUrl && merged.details && !merged.transcriptText) {
+        updateClip(c.id, { transcriptText: merged.details });
+      } else if (merged.transcriptUrl) {
+        await fetchTranscript(merged, merged.transcriptUrl);
+      }
+
+      startWatcher(merged);
     } catch (e: any) {
       console.error(e);
       updateClip(c.id, { status: "error" });
@@ -144,15 +180,29 @@ export default function App() {
         if (res.ok) {
           const data = await res.json();
           const serverId = data?.id || c.serverId;
-          updateClip(c.id, {
+          const updated: Clip = {
+            ...c,
             status: "processing",
             serverId,
             title: data?.title ?? c.title,
             tags: Array.isArray(data?.tags) ? data.tags : c.tags,
             details: data?.details ?? c.details,
             transcriptUrl: data?.transcriptUrl ?? c.transcriptUrl,
+          };
+          updateClip(c.id, {
+            status: updated.status,
+            serverId: updated.serverId,
+            title: updated.title,
+            tags: updated.tags,
+            details: updated.details,
+            transcriptUrl: updated.transcriptUrl,
           });
-          startWatcher({ ...c, serverId, status: "processing" });
+          if (!updated.transcriptUrl && updated.details && !updated.transcriptText) {
+            updateClip(c.id, { transcriptText: updated.details });
+          } else if (updated.transcriptUrl) {
+            await fetchTranscript(updated, updated.transcriptUrl);
+          }
+          startWatcher(updated);
         }
       }
     } catch (e) {
@@ -162,6 +212,31 @@ export default function App() {
 
   function addClip(clip: Clip) {
     setClips((prev) => [clip, ...prev]);
+  }
+
+  async function viewTranscript(c: Clip) {
+    let clip = c;
+    if (!clip.transcriptText) {
+      if (clip.transcriptUrl) {
+        if (!navigator.onLine) {
+          alert("Not available offline yet");
+          return;
+        }
+        const text = await fetchTranscript(clip, clip.transcriptUrl);
+        if (!text) {
+          alert("Transcript not ready yet");
+          return;
+        }
+        clip = { ...clip, transcriptText: text };
+      } else if (clip.details) {
+        updateClip(clip.id, { transcriptText: clip.details });
+        clip = { ...clip, transcriptText: clip.details };
+      } else {
+        alert("Transcript not available");
+        return;
+      }
+    }
+    setTranscriptClip(clip);
   }
 
   const clipContextValue = {
@@ -176,6 +251,7 @@ export default function App() {
     updateClip,
     syncQueued,
     refreshMetadata,
+    viewTranscript,
   };
   const pollingRef = useRef(new Map<string, { delay: number; handle: number | null }>());
   function stopWatcher(id: string) {
@@ -206,12 +282,24 @@ export default function App() {
 
       const data = await res.json();
 
-      updateClip(c.id, {
+      const updated: Clip = {
+        ...c,
         title: data.title ?? c.title,
         tags: Array.isArray(data.tags) ? data.tags : c.tags,
         details: data.details ?? c.details,
         transcriptUrl: data.transcriptUrl ?? c.transcriptUrl,
+      };
+      updateClip(c.id, {
+        title: updated.title,
+        tags: updated.tags,
+        details: updated.details,
+        transcriptUrl: updated.transcriptUrl,
       });
+      if (updated.transcriptUrl) {
+        await fetchTranscript(updated, updated.transcriptUrl);
+      } else if (updated.details && !updated.transcriptText) {
+        updateClip(c.id, { transcriptText: updated.details });
+      }
 
       if (res.status === 200 && data.status === "done") {
         updateClip(c.id, { status: "uploaded" });
@@ -284,6 +372,9 @@ export default function App() {
         <ClipsProvider value={clipContextValue}>
           <RecorderControls />
           <ClipList />
+          {transcriptClip && (
+            <TranscriptModal clip={transcriptClip} onClose={() => setTranscriptClip(null)} />
+          )}
           <audio ref={audioElRef} onEnded={() => setPlayingId(null)} className="hidden" />
         </ClipsProvider>
       </main>

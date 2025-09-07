@@ -13,6 +13,7 @@ export interface ClipsContextValue {
   updateClip(id: string, patch: Partial<Clip>): void;
   syncQueued(): void | Promise<void>;
   refreshMetadata(): void | Promise<void>;
+  viewTranscript(c: Clip): void | Promise<void>;
 }
 
 const ClipsContext = createContext<ClipsContextValue | undefined>(undefined);
