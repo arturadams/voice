@@ -258,7 +258,7 @@ export function RecorderControls() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
           <div className="sm:col-span-2">
-            <div className="rounded-xl border border-subtle bg-surface p-3">
+            <div className="rounded-xl border border-subtle bg-base overflow-hidden">
               <canvas ref={canvasRef} className="w-full h-24 bg-base" width={800} height={96} />
             </div>
           </div>
