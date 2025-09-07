@@ -192,7 +192,7 @@ export function RecorderControls() {
       <div className="p-4 sm:p-6 flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-semibold">New recording</h2>
+            <h2 className="text-lg font-semibold text-content">New recording</h2>
             <p className="text-sm text-muted">
               Tap to start. Works best over HTTPS and with a user gesture.
             </p>
