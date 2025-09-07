@@ -1,0 +1,22 @@
+@layer base {
+  .theme-standard {
+    --color-base: #ffffff;
+    --color-primary: #1d4ed8;
+    --color-secondary: #9333ea;
+    --color-accent: #f43f5e;
+  }
+
+  .theme-dark {
+    --color-base: #0f172a;
+    --color-primary: #3b82f6;
+    --color-secondary: #a855f7;
+    --color-accent: #f43f5e;
+  }
+
+  .theme-neon {
+    --color-base: #000000;
+    --color-primary: #39ff14;
+    --color-secondary: #ff0090;
+    --color-accent: #00eaff;
+  }
+}
