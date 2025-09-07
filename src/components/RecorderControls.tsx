@@ -79,12 +79,12 @@ export function RecorderControls() {
         await storage.save(saved);
         addClip(saved);
         setRecordingClip(null);
-        setRecordMs(0);
       } catch (e) {
         console.error(e);
         setRecordingClip((c) => (c ? { ...c, status: "error" } : c));
       } finally {
         stream.getTracks().forEach((t) => t.stop());
+        setRecordMs(0);
       }
     };
     mr.start(200);
@@ -151,7 +151,6 @@ export function RecorderControls() {
   }
   function stopRecording() {
     if (!recorder) return;
-    recorder.stream.getTracks().forEach((t) => t.stop());
     recorder.stop();
     setRecorder(null);
     recordStartRef.current = null;
@@ -159,8 +158,8 @@ export function RecorderControls() {
   }
   async function cancelRecording() {
     if (!recorder) return;
-    recorder.stream.getTracks().forEach((t) => t.stop());
     recorder.stop();
+    recorder.stream.getTracks().forEach((t) => t.stop());
     setRecorder(null);
     setRecordingClip(null);
     recordStartRef.current = null;
