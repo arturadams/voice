@@ -4,12 +4,13 @@ import { Clip } from "../models/clip";
 import { useStorage } from "../context/services";
 import { useClips } from "../context/clips";
 import { fmt } from "../utils/fmt";
+import { WavRecorder } from "../services/wav-recorder";
 
 export function RecorderControls() {
   const storage = useStorage();
   const { addClip } = useClips();
   const [permission, setPermission] = useState<"unknown" | "granted" | "denied">("unknown");
-  const [recorder, setRecorder] = useState<MediaRecorder | null>(null);
+  const [recorder, setRecorder] = useState<MediaRecorder | WavRecorder | null>(null);
   const [recordingClip, setRecordingClip] = useState<Clip | null>(null);
   const [recordMs, setRecordMs] = useState(0);
   const recordStartRef = useRef<number | null>(null);
@@ -41,9 +42,20 @@ export function RecorderControls() {
       "audio/mp4",
       "audio/ogg;codecs=opus",
     ];
-    const mimeType = candidates.find((c) => MediaRecorder.isTypeSupported(c)) || "audio/webm";
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mr = new MediaRecorder(stream, { mimeType });
+    let mimeType = "audio/wav";
+    let mr: MediaRecorder | WavRecorder;
+    if (typeof MediaRecorder !== "undefined") {
+      const supported = candidates.find((c) => MediaRecorder.isTypeSupported(c));
+      if (supported) {
+        mimeType = supported;
+        mr = new MediaRecorder(stream, { mimeType });
+      } else {
+        mr = new WavRecorder(stream);
+      }
+    } else {
+      mr = new WavRecorder(stream);
+    }
     const chunks: BlobPart[] = [];
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     audioCtxRef.current = ctx;
@@ -160,7 +172,8 @@ export function RecorderControls() {
   async function cancelRecording() {
     if (!recorder) return;
     recorder.stream.getTracks().forEach((t) => t.stop());
-    recorder.stop();
+    if ("cancel" in recorder) (recorder as any).cancel();
+    else recorder.stop();
     setRecorder(null);
     setRecordingClip(null);
     recordStartRef.current = null;
