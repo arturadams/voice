@@ -150,7 +150,7 @@ export function ClipList() {
               </div>
 
               <div className="sm:col-span-4 flex flex-col items-stretch justify-between gap-3">
-                <div className="flex items-center justify-end gap-2">
+                <div className="flex flex-wrap items-center justify-start sm:justify-end gap-2">
                   {playingId === c.id ? (
                     <button
                     onClick={stopPlayback}
