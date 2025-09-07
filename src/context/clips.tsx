@@ -1,5 +1,5 @@
-import React, { createContext, useContext } from 'react';
-import type { Clip } from '../models/clip';
+import React, { createContext, useContext } from "react";
+import type { Clip } from "../models/clip";
 
 export interface ClipsContextValue {
   clips: Clip[];
@@ -13,16 +13,20 @@ export interface ClipsContextValue {
   updateClip(id: string, patch: Partial<Clip>): void;
   syncQueued(): void | Promise<void>;
   refreshMetadata(): void | Promise<void>;
+  fetchTranscript(c: Clip): Promise<string | null>;
 }
 
 const ClipsContext = createContext<ClipsContextValue | undefined>(undefined);
 
-export function ClipsProvider({ value, children }: React.PropsWithChildren<{ value: ClipsContextValue }>) {
+export function ClipsProvider({
+  value,
+  children,
+}: React.PropsWithChildren<{ value: ClipsContextValue }>) {
   return <ClipsContext.Provider value={value}>{children}</ClipsContext.Provider>;
 }
 
 export function useClips(): ClipsContextValue {
   const ctx = useContext(ClipsContext);
-  if (!ctx) throw new Error('useClips must be used within a ClipsProvider');
+  if (!ctx) throw new Error("useClips must be used within a ClipsProvider");
   return ctx;
 }
