@@ -88,10 +88,14 @@ export function RecorderControls() {
         const objectUrl = URL.createObjectURL(blob);
         const duration = await probeDurationFromBlob(blob);
         const saved: Clip = { ...newClip, blob, objectUrl, size, duration, status: "saved" };
-        await storage.save(saved);
         addClip(saved);
         setRecordingClip(null);
         setRecordMs(0);
+        try {
+          await storage.save(saved);
+        } catch (err) {
+          console.error(err);
+        }
       } catch (e) {
         console.error(e);
         setRecordingClip((c) => (c ? { ...c, status: "error" } : c));
@@ -167,6 +171,7 @@ export function RecorderControls() {
     setRecorder(null);
     recordStartRef.current = null;
     if (timerRef.current) cancelAnimationFrame(timerRef.current);
+    setRecordMs(0);
   }
   async function cancelRecording() {
     if (!recorder) return;
@@ -176,6 +181,7 @@ export function RecorderControls() {
     setRecordingClip(null);
     recordStartRef.current = null;
     if (timerRef.current) cancelAnimationFrame(timerRef.current);
+    setRecordMs(0);
   }
 
   function probeDurationFromBlob(blob: Blob): Promise<number> {
