@@ -2,6 +2,7 @@ import { ClipStore } from "./types";
 import { IndexedDbStorage } from "./indexed-db";
 import { MemoryStorage } from "./memory-storage";
 import { FallbackStorage } from "./fallback-storage";
+import { LocalStorageStorage } from "./local-storage";
 
 /**
  * Create a {@link ClipStore} that attempts to use IndexedDB and falls back to
@@ -9,9 +10,17 @@ import { FallbackStorage } from "./fallback-storage";
  */
 export function createClipStore(): ClipStore {
   const memory = new MemoryStorage();
-  if (typeof indexedDB === "undefined") {
-    return memory;
+  let store: ClipStore = memory;
+
+  if (typeof localStorage !== "undefined") {
+    const local = new LocalStorageStorage();
+    store = new FallbackStorage(local, store);
   }
-  const idb = new IndexedDbStorage();
-  return new FallbackStorage(idb, memory);
+
+  if (typeof indexedDB !== "undefined") {
+    const idb = new IndexedDbStorage();
+    store = new FallbackStorage(idb, store);
+  }
+
+  return store;
 }

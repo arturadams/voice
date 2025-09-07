@@ -163,7 +163,6 @@ export function RecorderControls() {
   }
   function stopRecording() {
     if (!recorder) return;
-    recorder.stream.getTracks().forEach((t) => t.stop());
     recorder.stop();
     setRecorder(null);
     recordStartRef.current = null;
@@ -171,7 +170,6 @@ export function RecorderControls() {
   }
   async function cancelRecording() {
     if (!recorder) return;
-    recorder.stream.getTracks().forEach((t) => t.stop());
     if ("cancel" in recorder) (recorder as any).cancel();
     else recorder.stop();
     setRecorder(null);
