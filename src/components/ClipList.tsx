@@ -166,13 +166,15 @@ export function ClipList() {
                       <PlayIcon /> Play
                     </button>
                   )}
-                  <button
-                    onClick={() => uploadClip(c)}
-                    disabled={c.status === "processing"}
-                    className="rounded-full bg-slate-900 text-white px-3 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <UploadIcon /> Upload
-                  </button>
+                  {c.status !== "uploaded" && (
+                    <button
+                      onClick={() => uploadClip(c)}
+                      disabled={c.status === "processing"}
+                      className="rounded-full bg-slate-900 text-white px-3 py-2 text-sm flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <UploadIcon /> Upload
+                    </button>
+                  )}
                   <button
                     onClick={() => removeClip(c.id)}
                     className="rounded-full border px-3 py-2 text-sm flex items-center gap-2"
