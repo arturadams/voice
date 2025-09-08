@@ -3,9 +3,11 @@ import { SettingsIcon } from "../icons";
 
 type HeaderProps = {
   onSettingsClick: () => void;
+  tab: "pending" | "processed";
+  onTabChange: (tab: "pending" | "processed") => void;
 };
 
-export function Header({ onSettingsClick }: HeaderProps) {
+export function Header({ onSettingsClick, tab, onTabChange }: HeaderProps) {
   const { theme } = useTheme();
 
   let effectiveTheme = theme;
@@ -16,7 +18,10 @@ export function Header({ onSettingsClick }: HeaderProps) {
   const currentLogo = effectiveTheme === 'dark' ? '/dark-logo.png' : '/logo.png';
 
   return (
-    <header className="sticky top-0 z-10 backdrop-blur bg-surface/70 border-b border-subtle">
+    <header
+      className="sticky top-0 z-10 backdrop-blur bg-surface/70 border-b border-subtle"
+      style={{ paddingTop: "env(safe-area-inset-top)" }}
+    >
       <div className="mx-auto max-w-5xl px-2 sm:px-4 py-2 flex items-center gap-2 sm:gap-3">
         <img src={currentLogo} alt="VoiceRouter Logo" className="w-8 h-8 sm:w-9 sm:h-9" />
         <div className="flex-1">
@@ -32,6 +37,20 @@ export function Header({ onSettingsClick }: HeaderProps) {
           <SettingsIcon />
           <span className="hidden sm:inline">Settings</span>
         </button>
+      </div>
+      <div className="mx-auto max-w-5xl px-4">
+        <div className="flex gap-4 border-b border-subtle">
+          <button
+            onClick={() => onTabChange("pending")}
+            className={`py-2 px-4 text-sm ${tab === "pending" ? "border-b-2 border-primary text-primary" : "text-muted"}`}>
+            Pending
+          </button>
+          <button
+            onClick={() => onTabChange("processed")}
+            className={`py-2 px-4 text-sm ${tab === "processed" ? "border-b-2 border-primary text-primary" : "text-muted"}`}>
+            Processed
+          </button>
+        </div>
       </div>
     </header>
   );
