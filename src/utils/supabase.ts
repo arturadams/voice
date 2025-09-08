@@ -13,3 +13,14 @@ export async function signInWithSupabase(email: string, password: string): Promi
   return token;
 }
 
+export async function signUpWithSupabase(email: string, password: string): Promise<string | null> {
+  const { data, error } = await supabase.auth.signUp({ email, password });
+  if (error) throw error;
+  return data.session?.access_token || null;
+}
+
+export async function resetPasswordWithSupabase(email: string): Promise<void> {
+  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  if (error) throw error;
+}
+
