@@ -13,7 +13,6 @@ import { ApiConfig } from "./services/types";
 export function MainApp({ api, onApiChange }: { api: ApiConfig, onApiChange: (api: ApiConfig) => void }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showPostRecordingModal, setShowPostRecordingModal] = useState(false);
-  const [tab, setTab] = useState<"pending" | "processed">("processed");
   const clipManager = useClips();
 
   const {
@@ -36,15 +35,10 @@ export function MainApp({ api, onApiChange }: { api: ApiConfig, onApiChange: (ap
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-base via-base to-base text-content">
-      <Header
-        onSettingsClick={() => setShowSettings(true)}
-        tab={tab}
-        onTabChange={setTab}
-      />
+      <Header onSettingsClick={() => setShowSettings(true)} />
 
       <main className="mx-auto max-w-5xl px-4 py-6 pb-48">
-        {tab === "pending" && <ClipList statuses={["recording", "saved", "uploading", "error"]} />}
-        {tab === "processed" && <ClipList statuses={["uploaded"]} />}
+        <ClipList />
         <audio ref={clipManager.audioRef} className="hidden" />
       </main>
 
