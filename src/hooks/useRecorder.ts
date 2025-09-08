@@ -15,6 +15,7 @@ export function useRecorder(onRecordingComplete: () => void) {
   const timerRef = useRef<number | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
+  const chunksRef = useRef<BlobPart[]>([]);
 
   async function ensureMicPermission() {
     try {
@@ -52,7 +53,7 @@ export function useRecorder(onRecordingComplete: () => void) {
     } else {
       mr = new WavRecorder(stream);
     }
-    const chunks: BlobPart[] = [];
+    chunksRef.current = [];
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
     audioCtxRef.current = ctx;
     const source = ctx.createMediaStreamSource(stream);
@@ -70,33 +71,7 @@ export function useRecorder(onRecordingComplete: () => void) {
     };
     setRecordingClip(newClip);
     mr.ondataavailable = (ev) => {
-      if (ev.data && ev.data.size > 0) chunks.push(ev.data);
-    };
-    mr.onstop = async () => {
-      try {
-        const blob = new Blob(chunks, { type: mimeType });
-        ctx.close();
-        audioCtxRef.current = null;
-        analyserRef.current = null;
-        const size = blob.size;
-        const objectUrl = URL.createObjectURL(blob);
-        const duration = await probeDurationFromBlob(blob);
-        const saved: Clip = { ...newClip, blob, objectUrl, size, duration, status: "saved" };
-        addClip(saved);
-        setRecordingClip(null);
-        setRecordMs(0);
-        try {
-          await storage.save(saved);
-          onRecordingComplete();
-        } catch (err) {
-          console.error(err);
-        }
-      } catch (e) {
-        console.error(e);
-        setRecordingClip((c) => (c ? { ...c, status: "error" } : c));
-      } finally {
-        stream.getTracks().forEach((t) => t.stop());
-      }
+      if (ev.data && ev.data.size > 0) chunksRef.current.push(ev.data);
     };
     mr.start(200);
     setRecorder(mr);
@@ -128,9 +103,35 @@ export function useRecorder(onRecordingComplete: () => void) {
       tickTimer();
     }
   }
-  function stopRecording() {
+  async function stopRecording() {
     if (!recorder) return;
+    console.log("Stopping recording...");
     recorder.stop();
+    console.log("Recording stopped.");
+    const blob = new Blob(chunksRef.current, { type: recordingClip?.mimeType });
+    console.log("Blob created:", blob);
+    const audioCtx = audioCtxRef.current;
+    if (audioCtx) {
+      audioCtx.close();
+      audioCtxRef.current = null;
+    }
+    analyserRef.current = null;
+    const size = blob.size;
+    const objectUrl = URL.createObjectURL(blob);
+    console.log("Object URL created:", objectUrl);
+    const duration = await probeDurationFromBlob(blob);
+    console.log("Duration probed:", duration);
+    const saved: Clip = { ...recordingClip!, blob, objectUrl, size, duration, status: "saved" };
+    addClip(saved);
+    setRecordingClip(null);
+    setRecordMs(0);
+    try {
+      await storage.save(saved);
+      console.log("Clip saved to storage.");
+      onRecordingComplete();
+    } catch (err) {
+      console.error(err);
+    }
     setRecorder(null);
     recordStartRef.current = null;
     if (timerRef.current) cancelAnimationFrame(timerRef.current);

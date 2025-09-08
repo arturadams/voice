@@ -3,7 +3,7 @@ import { PlayIcon, StopIcon, UploadIcon, TrashIcon, TagIcon } from "../icons";
 import { fmt } from "../utils/fmt";
 import { useClips } from "../context/clips";
 
-export function ClipList() {
+export function ClipList({ statuses }: { statuses: Clip["status"][] }) {
   const {
     clips,
     playingId,
@@ -19,13 +19,14 @@ export function ClipList() {
   const [search, setSearch] = useState("");
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return clips;
-    return clips.filter((c) =>
+    const filteredByStatus = clips.filter((c) => statuses.includes(c.status));
+    if (!q) return filteredByStatus;
+    return filteredByStatus.filter((c) =>
       [c.title, c.details, ...(c.tags || [])]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q))
     );
-  }, [search, clips]);
+  }, [search, clips, statuses]);
 
   return (
     <>

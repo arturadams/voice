@@ -10,8 +10,8 @@ type BottomBarProps = {
 export function BottomBar(props: BottomBarProps) {
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-surface/70 backdrop-blur border-t border-subtle z-10">
-      <div className="mx-auto max-w-5xl p-8 flex justify-center">
-        <div style={{ marginTop: '-2.75rem' }}>
+      <div className="mx-auto max-w-5xl p-8 flex justify-center relative">
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
           <RecorderControls {...props} />
         </div>
       </div>

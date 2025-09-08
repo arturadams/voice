@@ -13,7 +13,7 @@ import { ApiConfig } from "./services/types";
 export function MainApp({ api, onApiChange }: { api: ApiConfig, onApiChange: (api: ApiConfig) => void }) {
   const [showSettings, setShowSettings] = useState(false);
   const [showPostRecordingModal, setShowPostRecordingModal] = useState(false);
-  const [tab, setTab] = useState<"pending" | "processed">("pending");
+  const [tab, setTab] = useState<"pending" | "processed">("processed");
   const clipManager = useClips();
 
   const {
@@ -42,9 +42,9 @@ export function MainApp({ api, onApiChange }: { api: ApiConfig, onApiChange: (ap
         onTabChange={setTab}
       />
 
-      <main className="mx-auto max-w-5xl px-4 py-6 pb-32">
-        {tab === "pending" && <ClipList />}
-        {tab === "processed" && <div>Processed clips will be shown here</div>}
+      <main className="mx-auto max-w-5xl px-4 py-6 pb-48">
+        {tab === "pending" && <ClipList statuses={["recording", "saved", "uploading", "error"]} />}
+        {tab === "processed" && <ClipList statuses={["uploaded"]} />}
         <audio ref={clipManager.audioRef} className="hidden" />
       </main>
 
