@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { SettingsIcon } from "./icons";
-import logo from "./assets/logo.png";
+import { Footer } from "./components/Footer";
+import { useEffect, useRef, useState } from "react";
+import { Header } from "./components/Header";
+import { Clip } from "./models/clip";
 import type { ApiConfig } from "./services/types";
 import { useStorage, useUploader } from "./context/services";
 import { RecorderControls } from "./components/RecorderControls";
@@ -26,26 +27,8 @@ export default function App() {
   const clipManager = useClipManager(api, storage, uploader);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 text-slate-900">
-      <header className="sticky top-0 z-10 backdrop-blur bg-white/70 border-b border-slate-200">
-        <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-3">
-          <img
-            src={logo}
-            alt="Velvet Notes logo"
-            className="w-9 h-9 rounded-xl shadow"
-          />
-          <div className="flex-1">
-            <h1 className="text-lg font-semibold leading-tight">Velvet Notes</h1>
-            <p className="text-xs text-slate-500">Premium voice notes — record, tag, and sync</p>
-          </div>
-          <button
-            onClick={() => setShowSettings(true)}
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm hover:shadow-sm"
-          >
-            <SettingsIcon /> Settings
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-gradient-to-b from-base via-base to-base text-content">
+      <Header onSettingsClick={() => setShowSettings(true)} />
 
       <main className="mx-auto max-w-5xl px-4 py-6">
         <ClipsProvider value={clipManager}>
@@ -59,10 +42,7 @@ export default function App() {
         <SettingsModal api={api} onApiChange={setApi} onClose={() => setShowSettings(false)} />
       )}
 
-      <footer className="py-10 text-center text-xs text-slate-400">
-        Built with ❤️ — works in modern browsers. For iOS Safari, ensure you serve over HTTPS and
-        tap to start recording.
-      </footer>
+      <Footer />
     </div>
   );
 }

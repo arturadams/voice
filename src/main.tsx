@@ -6,6 +6,7 @@ import { createClipStore } from './services/clip-store-factory'
 import { initServiceWorker } from './services/service-worker'
 import { HttpUploader } from './services/http-uploader'
 import { ServicesProvider } from './context/services'
+import { ThemeProvider } from './context/theme'
 
 initServiceWorker()
 
@@ -15,7 +16,9 @@ const uploader = new HttpUploader()
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ServicesProvider storage={storage} uploader={uploader}>
-      <App />
+      <ThemeProvider>
+        <App />
+      </ThemeProvider>
     </ServicesProvider>
   </React.StrictMode>,
 )

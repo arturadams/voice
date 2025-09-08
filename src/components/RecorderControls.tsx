@@ -120,11 +120,14 @@ export function RecorderControls() {
       rafRef.current = requestAnimationFrame(render);
       analyser.getByteTimeDomainData(dataArray);
       const { width, height } = canvas;
+      const styles = getComputedStyle(document.documentElement);
+      const baseColor = styles.getPropertyValue("--color-base").trim();
+      const primaryColor = styles.getPropertyValue("--color-primary").trim();
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.fillStyle = baseColor;
       ctx.fillRect(0, 0, width, height);
       ctx.lineWidth = 2;
-      ctx.strokeStyle = "#111827";
+      ctx.strokeStyle = primaryColor;
       ctx.beginPath();
       const sliceWidth = (width * 1.0) / bufferLength;
       let x = 0;
@@ -205,12 +208,12 @@ export function RecorderControls() {
   const isRecording = recorder && ["recording", "paused"].includes(recorder.state);
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+    <section className="rounded-2xl border border-subtle bg-surface shadow-sm overflow-hidden">
       <div className="p-4 sm:p-6 flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-semibold">New recording</h2>
-            <p className="text-sm text-slate-500">
+            <h2 className="text-lg font-semibold text-content">New recording</h2>
+            <p className="text-sm text-muted">
               Tap to start. Works best over HTTPS and with a user gesture.
             </p>
           </div>
@@ -218,7 +221,7 @@ export function RecorderControls() {
             {!isRecording && (
               <button
                 onClick={startRecording}
-                className="inline-flex items-center gap-2 rounded-full bg-slate-900 text-white px-5 py-3 text-sm shadow hover:opacity-95"
+                className="inline-flex items-center gap-2 rounded-full bg-primary text-base px-5 py-3 text-sm shadow hover:opacity-95"
               >
                 <MicIcon /> Start
               </button>
@@ -227,19 +230,19 @@ export function RecorderControls() {
               <>
                 <button
                   onClick={pauseRecording}
-                  className="rounded-full border px-4 py-2 text-sm flex items-center gap-2"
+                  className="rounded-full border border-subtle px-4 py-2 text-sm flex items-center gap-2"
                 >
                   <PauseIcon /> Pause
                 </button>
                 <button
                   onClick={stopRecording}
-                  className="rounded-full bg-emerald-600 text-white px-4 py-2 text-sm flex items-center gap-2"
+                  className="rounded-full bg-secondary text-base px-4 py-2 text-sm flex items-center gap-2"
                 >
                   <StopIcon /> Stop & Save
                 </button>
                 <button
                   onClick={cancelRecording}
-                  className="rounded-full border px-4 py-2 text-sm"
+                  className="rounded-full border border-subtle px-4 py-2 text-sm"
                 >
                   Cancel
                 </button>
@@ -249,19 +252,19 @@ export function RecorderControls() {
               <>
                 <button
                   onClick={resumeRecording}
-                  className="rounded-full bg-slate-900 text-white px-4 py-2 text-sm flex items-center gap-2"
+                  className="rounded-full bg-primary text-base px-4 py-2 text-sm flex items-center gap-2"
                 >
                   <PlayIcon /> Resume
                 </button>
                 <button
                   onClick={stopRecording}
-                  className="rounded-full bg-emerald-600 text-white px-4 py-2 text-sm flex items-center gap-2"
+                  className="rounded-full bg-secondary text-base px-4 py-2 text-sm flex items-center gap-2"
                 >
                   <StopIcon /> Stop & Save
                 </button>
                 <button
                   onClick={cancelRecording}
-                  className="rounded-full border px-4 py-2 text-sm"
+                  className="rounded-full border border-subtle px-4 py-2 text-sm"
                 >
                   Cancel
                 </button>
@@ -272,15 +275,15 @@ export function RecorderControls() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
           <div className="sm:col-span-2">
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-              <canvas ref={canvasRef} className="w-full h-24" width={800} height={96} />
+            <div className="rounded-xl border border-subtle bg-base overflow-hidden">
+              <canvas ref={canvasRef} className="w-full h-24 bg-base" width={800} height={96} />
             </div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-mono tabular-nums">{fmt.ms(recordMs)}</div>
-            <div className="text-xs text-slate-500">current session</div>
+            <div className="text-xs text-muted">current session</div>
             {permission === "denied" && (
-              <div className="mt-2 text-xs text-red-600">
+              <div className="mt-2 text-xs text-accent">
                 Microphone permission denied. Enable it in your browser settings.
               </div>
             )}
