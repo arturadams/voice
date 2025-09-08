@@ -2,15 +2,15 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
-import { registerSW } from 'virtual:pwa-register'
-import { IndexedDbStorage } from './services/indexed-db'
+import { createClipStore } from './services/clip-store-factory'
+import { initServiceWorker } from './services/service-worker'
 import { HttpUploader } from './services/http-uploader'
 import { ServicesProvider } from './context/services'
 import { ThemeProvider } from './context/theme'
 
-registerSW({ immediate: true })
+initServiceWorker()
 
-const storage = new IndexedDbStorage()
+const storage = createClipStore()
 const uploader = new HttpUploader()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
