@@ -23,6 +23,22 @@ export default function App() {
   }, [api.baseUrl, api.uploadPath]);
 
   useEffect(() => {
+    async function handleAuthCallback() {
+      const hash = window.location.hash;
+      const search = window.location.search;
+      if (hash.includes("access_token") || search.includes("code=")) {
+        const { data, error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+        if (!error && data.session) {
+          setApi((prev) => ({ ...prev, authToken: data.session.access_token || "" }));
+        }
+        const path = window.location.pathname === "/auth/callback" ? "/" : window.location.pathname;
+        window.history.replaceState({}, "", path);
+      }
+    }
+    handleAuthCallback();
+  }, []);
+
+  useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setApi((prev) => ({ ...prev, authToken: session?.access_token || "" }));
     });

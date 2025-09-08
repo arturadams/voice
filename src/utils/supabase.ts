@@ -14,13 +14,19 @@ export async function signInWithSupabase(email: string, password: string): Promi
 }
 
 export async function signUpWithSupabase(email: string, password: string): Promise<string | null> {
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const redirectTo = `${window.location.origin}/auth/callback`;
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { emailRedirectTo: redirectTo },
+  });
   if (error) throw error;
   return data.session?.access_token || null;
 }
 
 export async function resetPasswordWithSupabase(email: string): Promise<void> {
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  const redirectTo = `${window.location.origin}/auth/callback`;
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
   if (error) throw error;
 }
 
