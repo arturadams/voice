@@ -1,8 +1,22 @@
+import { StyleSheet, Text, View } from 'react-native';
+
 export function Footer() {
   return (
-    <footer className="py-10 text-center text-xs text-muted">
-      Built with ❤️ — works in modern browsers. For iOS Safari, ensure you serve over HTTPS and
-      tap to start recording.
-    </footer>
+    <View style={styles.container}>
+      <Text style={styles.text}>
+        Built with ❤️ — works on iOS, Android, and web.
+      </Text>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    paddingVertical: 16,
+    alignItems: 'center',
+  },
+  text: {
+    fontSize: 12,
+    color: '#666',
+  },
+});

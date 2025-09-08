@@ -1,11 +1,25 @@
-import { RecorderControls } from "./RecorderControls";
+import { StyleSheet, View } from 'react-native';
+import type { Clip } from '../models/clip';
+import { RecorderControls } from './RecorderControls';
 
-export function BottomBar() {
+type BottomBarProps = {
+  onRecorded: (clip: Clip) => void;
+};
+
+export function BottomBar({ onRecorded }: BottomBarProps) {
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-surface/70 backdrop-blur border-t border-subtle z-10">
-      <div className="mx-auto max-w-5xl p-4">
-        <RecorderControls />
-      </div>
-    </div>
+    <View style={styles.container}>
+      <RecorderControls onRecorded={onRecorded} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+});
