@@ -1,38 +1,48 @@
-import { useTheme } from "../context/theme";
-import { SettingsIcon } from "../icons";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 type HeaderProps = {
   onSettingsClick: () => void;
 };
 
 export function Header({ onSettingsClick }: HeaderProps) {
-  const { theme } = useTheme();
-
-  let effectiveTheme = theme;
-  if (theme === 'auto') {
-    effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-
-  const currentLogo = effectiveTheme === 'dark' ? '/dark-logo.png' : '/logo.png';
-
   return (
-    <header className="sticky top-0 z-10 backdrop-blur bg-surface/70 border-b border-subtle">
-      <div className="mx-auto max-w-5xl px-2 sm:px-4 py-2 flex items-center gap-2 sm:gap-3">
-        <img src={currentLogo} alt="VoiceRouter Logo" className="w-8 h-8 sm:w-9 sm:h-9" />
-        <div className="flex-1">
-          <h1 className="text-content sm:text-lg font-semibold leading-tight">VoiceRouter</h1>
-          <p className="text-xs text-muted hidden sm:block">
-            Premium voice notes — record, tag, and sync
-          </p>
-        </div>
-        <button
-          onClick={onSettingsClick}
-          className="inline-flex items-center gap-2 rounded-full sm:rounded-xl border border-subtle bg-surface p-2 sm:px-3 sm:py-2 text-sm hover:shadow-sm"
-        >
-          <SettingsIcon />
-          <span className="hidden sm:inline">Settings</span>
-        </button>
-      </div>
-    </header>
+    <View style={styles.container}>
+      <Image source={require('../assets/logo.png')} style={styles.logo} />
+      <Text style={styles.title}>VoiceRouter</Text>
+      <TouchableOpacity onPress={onSettingsClick} style={styles.button}>
+        <Text style={styles.buttonText}>Settings</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#ccc',
+  },
+  logo: {
+    width: 32,
+    height: 32,
+    marginRight: 8,
+  },
+  title: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  button: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: '#eee',
+    borderRadius: 16,
+  },
+  buttonText: {
+    fontSize: 14,
+  },
+});

@@ -1,0 +1,7 @@
+{
+  "expo": {
+    "name": "voice-router",
+    "slug": "voice-router",
+    "platforms": ["ios", "android", "web"]
+  }
+}
