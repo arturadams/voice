@@ -11,8 +11,8 @@ export function Header({ onSettingsClick }: HeaderProps) {
   const { theme } = useTheme();
 
   let effectiveTheme = theme;
-  if (theme === 'default') {
-    effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'standard';
+  if (theme === 'auto') {
+    effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
   const currentLogo = effectiveTheme === 'dark' ? darkLogo : logo;

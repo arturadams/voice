@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type Theme = 'standard' | 'dark' | 'neon' | 'default';
+export type Theme = 'auto' | 'light' | 'dark' | 'neon';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -9,12 +9,12 @@ interface ThemeContextValue {
 
 const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
-const THEMES: Theme[] = ['standard', 'dark', 'neon'];
+export const THEMES: Theme[] = ['auto', 'light', 'dark', 'neon'];
 const THEME_COLORS: Record<Theme, string> = {
-  standard: '#f8fafc',
+  light: '#f8fafc',
   dark: '#0f172a',
   neon: '#000000',
-  default: '#f8fafc',
+  auto: '#f8fafc',
 };
 
 function applyTheme(theme: Theme): void {
@@ -22,8 +22,8 @@ function applyTheme(theme: Theme): void {
   for (const t of THEMES) root.classList.remove(`theme-${t}`);
   
   let effectiveTheme: Theme = theme;
-  if (theme === 'default') {
-    effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'standard';
+  if (theme === 'auto') {
+    effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
   root.classList.add(`theme-${effectiveTheme}`);
@@ -34,7 +34,7 @@ function applyTheme(theme: Theme): void {
 export function ThemeProvider({ children }: React.PropsWithChildren) {
   const [theme, setTheme] = useState<Theme>(() => {
     const stored = localStorage.getItem('theme');
-    return THEMES.includes(stored as Theme) ? (stored as Theme) : 'default';
+    return THEMES.includes(stored as Theme) ? (stored as Theme) : 'auto';
   });
 
   useEffect(() => {

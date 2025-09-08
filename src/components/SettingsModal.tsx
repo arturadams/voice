@@ -1,7 +1,7 @@
 import { SaveIcon } from "../icons";
 import type { ApiConfig } from "../services/types";
 import { notesUrl } from "../utils/api";
-import { useTheme, type Theme } from "../context/theme";
+import { useTheme, THEMES, type Theme } from "../context/theme";
 
 interface SettingsModalProps {
   api: ApiConfig;
@@ -34,9 +34,11 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
               value={theme}
               onChange={(e) => setTheme(e.target.value as Theme)}
             >
-              <option value="standard">Standard</option>
-              <option value="dark">Dark</option>
-              <option value="neon">Neon</option>
+              {THEMES.map((themeName) => (
+                <option key={themeName} value={themeName}>
+                  {themeName.charAt(0).toUpperCase() + themeName.slice(1)}
+                </option>
+              ))}
             </select>
           </div>
           <div>
