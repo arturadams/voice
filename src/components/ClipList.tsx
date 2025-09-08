@@ -14,7 +14,6 @@ export function ClipList({ statuses }: { statuses: Clip["status"][] }) {
     removeClip,
     updateClip,
     syncQueued,
-    refreshMetadata,
   } = useClips();
   const [search, setSearch] = useState("");
   const filtered = useMemo(() => {
@@ -53,13 +52,6 @@ export function ClipList({ statuses }: { statuses: Clip["status"][] }) {
           title="Upload any notes queued while offline"
         >
           Sync queued
-        </button>
-        <button
-          onClick={refreshMetadata}
-          className="inline-flex items-center gap-2 rounded-xl border border-subtle bg-surface px-3 py-2 text-sm hover:shadow-sm"
-          title="Pull latest tags/titles from server"
-        >
-          Refresh
         </button>
         <button
           onClick={async () => {
@@ -154,7 +146,7 @@ export function ClipList({ statuses }: { statuses: Clip["status"][] }) {
                 <div className="flex items-center justify-end gap-2">
                   {playingId === c.id ? (
                     <button
-                    onClick={stopPlayback}
+                      onClick={stopPlayback}
                       className="rounded-full border px-3 py-2 text-sm flex items-center gap-2"
                     >
                       <StopIcon /> Stop
