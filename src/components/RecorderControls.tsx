@@ -208,88 +208,74 @@ export function RecorderControls() {
   const isRecording = recorder && ["recording", "paused"].includes(recorder.state);
 
   return (
-    <section className="rounded-2xl border border-subtle bg-surface shadow-sm overflow-hidden">
-      <div className="p-4 sm:p-6 flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-semibold text-content">New recording</h2>
-            <p className="text-sm text-muted">
-              Tap to start. Works best over HTTPS and with a user gesture.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {!isRecording && (
-              <button
-                onClick={startRecording}
-                className="inline-flex items-center gap-2 rounded-full bg-primary text-base px-5 py-3 text-sm shadow hover:opacity-95"
-              >
-                <MicIcon /> Start
-              </button>
-            )}
-            {isRecording && recorder?.state === "recording" && (
-              <>
-                <button
-                  onClick={pauseRecording}
-                  className="rounded-full border border-subtle px-4 py-2 text-sm flex items-center gap-2"
-                >
-                  <PauseIcon /> Pause
-                </button>
-                <button
-                  onClick={stopRecording}
-                  className="rounded-full bg-secondary text-base px-4 py-2 text-sm flex items-center gap-2"
-                >
-                  <StopIcon /> Stop & Save
-                </button>
-                <button
-                  onClick={cancelRecording}
-                  className="rounded-full border border-subtle px-4 py-2 text-sm"
-                >
-                  Cancel
-                </button>
-              </>
-            )}
-            {isRecording && recorder?.state === "paused" && (
-              <>
-                <button
-                  onClick={resumeRecording}
-                  className="rounded-full bg-primary text-base px-4 py-2 text-sm flex items-center gap-2"
-                >
-                  <PlayIcon /> Resume
-                </button>
-                <button
-                  onClick={stopRecording}
-                  className="rounded-full bg-secondary text-base px-4 py-2 text-sm flex items-center gap-2"
-                >
-                  <StopIcon /> Stop & Save
-                </button>
-                <button
-                  onClick={cancelRecording}
-                  className="rounded-full border border-subtle px-4 py-2 text-sm"
-                >
-                  Cancel
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
-          <div className="sm:col-span-2">
-            <div className="rounded-xl border border-subtle bg-base overflow-hidden">
-              <canvas ref={canvasRef} className="w-full h-24 bg-base" width={800} height={96} />
-            </div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-mono tabular-nums">{fmt.ms(recordMs)}</div>
-            <div className="text-xs text-muted">current session</div>
-            {permission === "denied" && (
-              <div className="mt-2 text-xs text-accent">
-                Microphone permission denied. Enable it in your browser settings.
-              </div>
-            )}
-          </div>
+    <div className="flex flex-col sm:flex-row items-center gap-3">
+      <div className="flex-1 w-full sm:min-w-0">
+        <div className="rounded-xl border border-subtle bg-base overflow-hidden">
+          <canvas ref={canvasRef} className="w-full h-12 sm:h-16 bg-base" width={800} height={64} />
         </div>
       </div>
-    </section>
+      <div className="flex items-center justify-center gap-2">
+        {!isRecording && (
+          <button
+            onClick={startRecording}
+            className="inline-flex items-center gap-2 rounded-full bg-primary text-base p-3 text-sm shadow hover:opacity-95"
+          >
+            <MicIcon />
+          </button>
+        )}
+        {isRecording && recorder?.state === "recording" && (
+          <>
+            <button
+              onClick={pauseRecording}
+              className="rounded-full border border-subtle p-2 text-sm flex items-center gap-2"
+            >
+              <PauseIcon />
+            </button>
+            <button
+              onClick={stopRecording}
+              className="rounded-full bg-secondary text-base p-3 text-sm flex items-center gap-2"
+            >
+              <StopIcon />
+            </button>
+            <button
+              onClick={cancelRecording}
+              className="rounded-full border border-subtle p-2 text-sm"
+            >
+              Cancel
+            </button>
+          </>
+        )}
+        {isRecording && recorder?.state === "paused" && (
+          <>
+            <button
+              onClick={resumeRecording}
+              className="rounded-full bg-primary text-base p-2 text-sm flex items-center gap-2"
+            >
+              <PlayIcon />
+            </button>
+            <button
+              onClick={stopRecording}
+              className="rounded-full bg-secondary text-base p-3 text-sm flex items-center gap-2"
+            >
+              <StopIcon />
+            </button>
+            <button
+              onClick={cancelRecording}
+              className="rounded-full border border-subtle p-2 text-sm"
+            >
+              Cancel
+            </button>
+          </>
+        )}
+      </div>
+      <div className="text-center">
+        <div className="text-lg font-mono tabular-nums">{fmt.ms(recordMs)}</div>
+        {permission === "denied" && (
+          <div className="mt-1 text-xs text-accent">
+            Mic permission denied.
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
