@@ -104,7 +104,7 @@ export function ClipList() {
                     </span>
                   )}
                   {c.status === "processing" && (
-                    <span className="text-xs rounded-full bg-warning/10 text-warning px-2 py-0.5">
+                    <span className="text-xs rounded-full bg-secondary/10 text-secondary px-2 py-0.5">
                       Uploading…
                     </span>
                   )}
