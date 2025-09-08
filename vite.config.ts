@@ -18,8 +18,8 @@ export default defineConfig({
         "apple-touch-icon-dark.png",
       ],
       manifest: {
-        name: "Velvet Notes",
-        short_name: "VelvetNotes",
+        name: "VoiceRouter",
+        short_name: "VoiceRouter",
         description: "Premium voice notes — record, tag, and sync",
         // Use relative scope when deploying under a subpath:
         start_url: ".",
