@@ -3,11 +3,9 @@ import { SettingsIcon } from "../icons";
 
 type HeaderProps = {
   onSettingsClick: () => void;
-  tab: "pending" | "processed";
-  onTabChange: (tab: "pending" | "processed") => void;
 };
 
-export function Header({ onSettingsClick, tab, onTabChange }: HeaderProps) {
+export function Header({ onSettingsClick }: HeaderProps) {
   const { theme } = useTheme();
 
   let effectiveTheme = theme;
@@ -37,20 +35,6 @@ export function Header({ onSettingsClick, tab, onTabChange }: HeaderProps) {
           <SettingsIcon />
           <span className="hidden sm:inline">Settings</span>
         </button>
-      </div>
-      <div className="mx-auto max-w-5xl px-4">
-        <div className="flex gap-4 border-b border-subtle">
-          <button
-            onClick={() => onTabChange("pending")}
-            className={`py-2 px-4 text-sm ${tab === "pending" ? "border-b-2 border-primary text-primary" : "text-muted"}`}>
-            Pending
-          </button>
-          <button
-            onClick={() => onTabChange("processed")}
-            className={`py-2 px-4 text-sm ${tab === "processed" ? "border-b-2 border-primary text-primary" : "text-muted"}`}>
-            Processed
-          </button>
-        </div>
       </div>
     </header>
   );

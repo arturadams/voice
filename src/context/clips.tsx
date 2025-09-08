@@ -5,6 +5,7 @@ export interface ClipsContextValue {
   clips: Clip[];
   playingId: string | null;
   online: boolean;
+  audioRef: React.RefObject<HTMLAudioElement>;
   addClip(clip: Clip): void;
   playClip(c: Clip): void | Promise<void>;
   stopPlayback(): void;
