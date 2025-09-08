@@ -70,7 +70,18 @@ export const SaveIcon = (p: any) => (
   <Icon {...p} path="M19 21H5a2 2 0 0 1-2-2V5h13l3 3v11a2 2 0 0 1-2 2z" />
 );
 export const TagIcon = (p: any) => <Icon {...p} path="M20 12l-8 8-9-9 4-4 9 9z" />;
-export const SearchIcon = (p: any) => <Icon {...p} path="M11 17.25a6.25 6.25 0 110-12.5 6.25 6.25 0 010 12.5zM16 16l4.5 4.5" />;
-export const MoreVerticalIcon = (p: any) => <Icon {...p} path="M12 12h.01M12 5h.01M12 19h.01" />;
+export const RecordIcon = (p: any) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    width={p.size || 20}
+    height={p.size || 20}
+    className={p.className || ""}
+    fill="currentColor"
+  >
+    <circle cx="12" cy="12" r="10" />
+  </svg>
+);
+export const CloseIcon = (p: any) => <Icon {...p} path="M18 6L6 18M6 6l12 12" />;
 
 export default Icon;
