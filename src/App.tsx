@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { MicIcon, SettingsIcon } from "./icons";
+import { SettingsIcon } from "./icons";
+import logo from "./assets/logo.png";
 import type { ApiConfig } from "./services/types";
 import { useStorage, useUploader } from "./context/services";
 import { RecorderControls } from "./components/RecorderControls";
@@ -28,9 +29,11 @@ export default function App() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 text-slate-900">
       <header className="sticky top-0 z-10 backdrop-blur bg-white/70 border-b border-slate-200">
         <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-slate-900 text-white flex items-center justify-center shadow">
-            <MicIcon size={18} />
-          </div>
+          <img
+            src={logo}
+            alt="Velvet Notes logo"
+            className="w-9 h-9 rounded-xl shadow"
+          />
           <div className="flex-1">
             <h1 className="text-lg font-semibold leading-tight">Velvet Notes</h1>
             <p className="text-xs text-slate-500">Premium voice notes — record, tag, and sync</p>
