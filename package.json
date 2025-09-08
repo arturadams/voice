@@ -4,15 +4,17 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "expo start",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "deploy": "vite build && gh-pages -d dist",
     "test": "node scripts/test-services.cjs"
   },
   "dependencies": {
+    "expo": "^51.0.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-native": "^0.74.0",
+    "react-native-web": "^0.19.8"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
