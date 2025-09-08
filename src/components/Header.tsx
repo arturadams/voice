@@ -18,9 +18,9 @@ export function Header({ onSettingsClick }: HeaderProps) {
   return (
     <header className="sticky top-0 z-10 backdrop-blur bg-surface/70 border-b border-subtle">
       <div className="mx-auto max-w-5xl px-2 sm:px-4 py-2 flex items-center gap-2 sm:gap-3">
-        <img src={currentLogo} alt="Velvet Notes Logo" className="w-8 h-8 sm:w-9 sm:h-9" />
+        <img src={currentLogo} alt="VoiceRouter Logo" className="w-8 h-8 sm:w-9 sm:h-9" />
         <div className="flex-1">
-          <h1 className="text-content sm:text-lg font-semibold leading-tight">Velvet Notes</h1>
+          <h1 className="text-content sm:text-lg font-semibold leading-tight">VoiceRouter</h1>
           <p className="text-xs text-muted hidden sm:block">
             Premium voice notes — record, tag, and sync
           </p>
