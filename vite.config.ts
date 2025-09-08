@@ -11,7 +11,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "dark-favicon.ico", "apple-touch-icon.png", "apple-touch-icon-dark.png"],
+      includeAssets: [
+        "favicon.ico",
+        "dark-favicon.ico",
+        "apple-touch-icon.png",
+        "apple-touch-icon-dark.png",
+      ],
       manifest: {
         name: "Velvet Notes",
         short_name: "VelvetNotes",
