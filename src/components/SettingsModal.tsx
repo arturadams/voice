@@ -13,11 +13,11 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
   const { theme, setTheme } = useTheme();
   return (
     <div
-      className="fixed inset-0 z-20 flex items-center justify-center bg-base/40 p-4"
+      className="fixed inset-0 z-20 flex items-center justify-center bg-base/40 p-0 sm:p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg rounded-2xl bg-surface shadow-xl border border-subtle"
+        className="w-full h-full sm:h-auto sm:max-w-lg rounded-none sm:rounded-2xl bg-surface shadow-xl border-subtle"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-4 border-b border-subtle flex items-center justify-between">

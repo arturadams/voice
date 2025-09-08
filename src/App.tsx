@@ -1,14 +1,13 @@
 import { Footer } from "./components/Footer";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Header } from "./components/Header";
-import { Clip } from "./models/clip";
 import type { ApiConfig } from "./services/types";
 import { useStorage, useUploader } from "./context/services";
-import { RecorderControls } from "./components/RecorderControls";
 import { ClipList } from "./components/ClipList";
 import { SettingsModal } from "./components/SettingsModal";
 import { ClipsProvider } from "./context/clips";
 import { useClipManager } from "./services/clip-manager";
+import { BottomBar } from "./components/BottomBar";
 
 export default function App() {
   const storage = useStorage();
@@ -27,23 +26,23 @@ export default function App() {
   const clipManager = useClipManager(api, storage, uploader);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-base via-base to-base text-content">
-      <Header onSettingsClick={() => setShowSettings(true)} />
+    <ClipsProvider value={clipManager}>
+      <div className="min-h-screen bg-gradient-to-b from-base via-base to-base text-content">
+        <Header onSettingsClick={() => setShowSettings(true)} />
 
-      <main className="mx-auto max-w-5xl px-4 py-6">
-        <ClipsProvider value={clipManager}>
-          <RecorderControls />
+        <main className="mx-auto max-w-5xl px-4 py-6 pb-32">
           <ClipList />
           <audio ref={clipManager.audioRef} className="hidden" />
-        </ClipsProvider>
-      </main>
+        </main>
 
-      {showSettings && (
-        <SettingsModal api={api} onApiChange={setApi} onClose={() => setShowSettings(false)} />
-      )}
+        {showSettings && (
+          <SettingsModal api={api} onApiChange={setApi} onClose={() => setShowSettings(false)} />
+        )}
 
-      <Footer />
-    </div>
+        <BottomBar />
+        <Footer />
+      </div>
+    </ClipsProvider>
   );
 }
 

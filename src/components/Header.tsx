@@ -1,6 +1,4 @@
 import { useTheme } from "../context/theme";
-import logo from "../assets/logo.png";
-import darkLogo from "../assets/dark-logo.png";
 import { SettingsIcon } from "../icons";
 
 type HeaderProps = {
@@ -15,23 +13,24 @@ export function Header({ onSettingsClick }: HeaderProps) {
     effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   }
 
-  const currentLogo = effectiveTheme === 'dark' ? darkLogo : logo;
+  const currentLogo = effectiveTheme === 'dark' ? '/dark-logo.png' : '/logo.png';
 
   return (
     <header className="sticky top-0 z-10 backdrop-blur bg-surface/70 border-b border-subtle">
-      <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-3">
-        <img src={currentLogo} alt="Velvet Notes Logo" className="w-9 h-9" />
+      <div className="mx-auto max-w-5xl px-2 sm:px-4 py-2 flex items-center gap-2 sm:gap-3">
+        <img src={currentLogo} alt="Velvet Notes Logo" className="w-8 h-8 sm:w-9 sm:h-9" />
         <div className="flex-1">
-          <h1 className="text-lg font-semibold leading-tight">Velvet Notes</h1>
-          <p className="text-xs text-muted">
+          <h1 className="text-content sm:text-lg font-semibold leading-tight">Velvet Notes</h1>
+          <p className="text-xs text-muted hidden sm:block">
             Premium voice notes — record, tag, and sync
           </p>
         </div>
         <button
           onClick={onSettingsClick}
-          className="inline-flex items-center gap-2 rounded-xl border border-subtle bg-surface px-3 py-2 text-sm hover:shadow-sm"
+          className="inline-flex items-center gap-2 rounded-full sm:rounded-xl border border-subtle bg-surface p-2 sm:px-3 sm:py-2 text-sm hover:shadow-sm"
         >
-          <SettingsIcon /> Settings
+          <SettingsIcon />
+          <span className="hidden sm:inline">Settings</span>
         </button>
       </div>
     </header>
