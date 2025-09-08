@@ -33,8 +33,12 @@ export class HttpUploader implements UploadService {
     if (clip.title) fd.append("title", clip.title);
     if (clip.tags?.length) fd.append("tags", JSON.stringify(clip.tags));
 
+    const headers: Record<string, string> = {};
+    if (api.authToken) headers["Authorization"] = `Bearer ${api.authToken}`;
+
     const res = await fetch(notesUrl(api.baseUrl, api.uploadPath), {
       method: "POST",
+      headers,
       body: fd,
     });
     if (!res.ok) {
