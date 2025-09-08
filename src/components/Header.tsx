@@ -1,16 +1,26 @@
-import { MicIcon, SettingsIcon } from "../icons";
+import { useTheme } from "../context/theme";
+import logo from "../assets/logo.png";
+import darkLogo from "../assets/dark-logo.png";
+import { SettingsIcon } from "../icons";
 
 type HeaderProps = {
   onSettingsClick: () => void;
 };
 
 export function Header({ onSettingsClick }: HeaderProps) {
+  const { theme } = useTheme();
+
+  let effectiveTheme = theme;
+  if (theme === 'default') {
+    effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'standard';
+  }
+
+  const currentLogo = effectiveTheme === 'dark' ? darkLogo : logo;
+
   return (
     <header className="sticky top-0 z-10 backdrop-blur bg-surface/70 border-b border-subtle">
       <div className="mx-auto max-w-5xl px-4 py-3 flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-primary text-base flex items-center justify-center shadow">
-          <MicIcon size={18} />
-        </div>
+        <img src={currentLogo} alt="Velvet Notes Logo" className="w-9 h-9" />
         <div className="flex-1">
           <h1 className="text-lg font-semibold leading-tight">Velvet Notes</h1>
           <p className="text-xs text-muted">

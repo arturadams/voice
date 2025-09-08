@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
-export type Theme = 'standard' | 'dark' | 'neon';
+export type Theme = 'standard' | 'dark' | 'neon' | 'default';
 
 interface ThemeContextValue {
   theme: Theme;
@@ -14,20 +14,27 @@ const THEME_COLORS: Record<Theme, string> = {
   standard: '#f8fafc',
   dark: '#0f172a',
   neon: '#000000',
+  default: '#f8fafc',
 };
 
 function applyTheme(theme: Theme): void {
   const root = document.documentElement;
   for (const t of THEMES) root.classList.remove(`theme-${t}`);
-  root.classList.add(`theme-${theme}`);
+  
+  let effectiveTheme: Theme = theme;
+  if (theme === 'default') {
+    effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'standard';
+  }
+
+  root.classList.add(`theme-${effectiveTheme}`);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', THEME_COLORS[theme]);
+  if (meta) meta.setAttribute('content', THEME_COLORS[effectiveTheme]);
 }
 
 export function ThemeProvider({ children }: React.PropsWithChildren) {
   const [theme, setTheme] = useState<Theme>(() => {
     const stored = localStorage.getItem('theme');
-    return THEMES.includes(stored as Theme) ? (stored as Theme) : 'standard';
+    return THEMES.includes(stored as Theme) ? (stored as Theme) : 'default';
   });
 
   useEffect(() => {
