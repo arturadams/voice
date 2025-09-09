@@ -9,5 +9,6 @@
   "include": [
     "src/services/**/*.ts",
     "src/models/clip.ts"
-  ]
+  ],
+  "exclude": ["src/services/supabase.ts"]
 }
