@@ -43,7 +43,9 @@ export function MainApp({ api, onApiChange }: { api: ApiConfig, onApiChange: (ap
       />
 
       <main className="mx-auto max-w-5xl px-4 py-6 pb-48">
-        {tab === "pending" && <ClipList statuses={["recording", "saved", "uploading", "error"]} />}
+        {tab === "pending" && (
+          <ClipList statuses={["recording", "saved", "queued", "processing", "error"]} />
+        )}
         {tab === "processed" && <ClipList statuses={["uploaded"]} />}
         <audio ref={clipManager.audioRef} className="hidden" />
       </main>

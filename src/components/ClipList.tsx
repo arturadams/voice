@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { PlayIcon, StopIcon, UploadIcon, TrashIcon, TagIcon } from "../icons";
 import { fmt } from "../utils/fmt";
 import { useClips } from "../context/clips";
+import type { Clip } from "../models/clip";
 
 export function ClipList({ statuses }: { statuses: Clip["status"][] }) {
   const {

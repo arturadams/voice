@@ -15,13 +15,17 @@ export function AuthCallback() {
       const hashParams = new URLSearchParams(window.location.hash.substring(1));
       const code = params.get('code');
       const accessToken = hashParams.get('access_token');
+      const refreshToken = hashParams.get('refresh_token');
       const type = params.get('type') || hashParams.get('type');
 
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) console.error('exchange error', error);
       } else if (accessToken) {
-        const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken || ''
+        });
         if (error) console.error('session error', error);
       } else {
         window.location.replace('/');
