@@ -4,6 +4,7 @@ import { supabase } from '../utils/supabase';
 export function AuthCallback() {
   const [isRecovery, setIsRecovery] = useState(false);
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -32,7 +33,7 @@ export function AuthCallback() {
         return;
       }
 
-      if (type === 'recovery') {
+      if (type === 'recovery' || (!type && accessToken)) {
         setIsRecovery(true);
       } else {
         window.location.replace('/');
@@ -43,6 +44,10 @@ export function AuthCallback() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (password !== confirm) {
+      setError('Passwords do not match');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
@@ -78,6 +83,17 @@ export function AuthCallback() {
             className="w-full px-3 py-2 rounded bg-base text-content border border-subtle focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label className="block text-sm mb-1" htmlFor="confirm">Confirm Password</label>
+          <input
+            id="confirm"
+            type="password"
+            className="w-full px-3 py-2 rounded bg-base text-content border border-subtle focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
             required
           />
         </div>
