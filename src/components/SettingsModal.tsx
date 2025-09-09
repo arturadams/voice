@@ -2,6 +2,7 @@ import { SaveIcon } from "../icons";
 import type { ApiConfig } from "../services/types";
 import { notesUrl } from "../utils/api";
 import { useTheme, THEMES, type Theme } from "../context/theme";
+import { supabase } from "../utils/supabase";
 
 interface SettingsModalProps {
   api: ApiConfig;
@@ -89,8 +90,21 @@ export function SettingsModal({ api, onApiChange, onClose }: SettingsModalProps)
               Test endpoint
             </button>
           </div>
+          <div className="pt-2">
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                onApiChange((x) => ({ ...x, authToken: "" }));
+                onClose();
+              }}
+              className="inline-flex items-center gap-2 rounded-xl border border-subtle bg-surface px-4 py-2 text-sm"
+            >
+              Log out
+            </button>
+          </div>
           <div className="text-xs text-muted pt-2">
-            Your settings are saved locally (localStorage). Recordings are stored on-device using IndexedDB until you upload them.
+            Your settings are saved locally (localStorage).
+            Recordings are stored on-device using IndexedDB until you upload them.
           </div>
         </div>
       </div>
