@@ -36,8 +36,11 @@ export default function App() {
   }, []);
 
   const clipManager = useClipManager(api, storage, uploader);
+  const isAuthCallback =
+    window.location.pathname === "/auth/callback" ||
+    window.location.hash.includes("access_token");
 
-  if (window.location.pathname === "/auth/callback") {
+  if (isAuthCallback) {
     return <AuthCallback />;
   }
 

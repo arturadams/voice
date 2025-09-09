@@ -11,12 +11,23 @@ export function AuthCallback() {
   useEffect(() => {
     const run = async () => {
       const url = new URL(window.location.href);
-      const code = url.searchParams.get('code');
-      const type = url.searchParams.get('type');
+      const params = url.searchParams;
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const code = params.get('code');
+      const accessToken = hashParams.get('access_token');
+      const type = params.get('type') || hashParams.get('type');
+
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) console.error('exchange error', error);
+      } else if (accessToken) {
+        const { error } = await supabase.auth.getSessionFromUrl({ storeSession: true });
+        if (error) console.error('session error', error);
+      } else {
+        window.location.replace('/');
+        return;
       }
+
       if (type === 'recovery') {
         setIsRecovery(true);
       } else {
