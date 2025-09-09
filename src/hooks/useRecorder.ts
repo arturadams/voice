@@ -107,6 +107,8 @@ export function useRecorder(onRecordingComplete: () => void) {
   }
   async function stopRecording() {
     if (!recorder) return;
+    const stream = streamRef.current;
+    streamRef.current = null;
     console.log("Stopping recording...");
     recorder.stop();
     console.log("Recording stopped.");
@@ -138,10 +140,8 @@ export function useRecorder(onRecordingComplete: () => void) {
     recordStartRef.current = null;
     if (timerRef.current) cancelAnimationFrame(timerRef.current);
     setRecordMs(0);
-    const stream = streamRef.current;
     if (stream) {
       stream.getTracks().forEach((t) => t.stop());
-      streamRef.current = null;
     }
   }
   async function cancelRecording() {
