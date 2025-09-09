@@ -13,6 +13,7 @@ export interface ClipsContextValue {
   updateClip(id: string, patch: Partial<Clip>): void;
   syncQueued(): void | Promise<void>;
   refreshMetadata(): void | Promise<void>;
+  audioRef: React.RefObject<HTMLAudioElement>;
 }
 
 const ClipsContext = createContext<ClipsContextValue | undefined>(undefined);
