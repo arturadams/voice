@@ -16,6 +16,7 @@ export function useRecorder(onRecordingComplete: () => void) {
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
+  const streamRef = useRef<MediaStream | null>(null);
 
   async function ensureMicPermission() {
     try {
@@ -40,6 +41,7 @@ export function useRecorder(onRecordingComplete: () => void) {
       "audio/ogg;codecs=opus",
     ];
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    streamRef.current = stream;
     let mimeType = "audio/wav";
     let mr: MediaRecorder | WavRecorder;
     if (typeof MediaRecorder !== "undefined") {
@@ -136,6 +138,11 @@ export function useRecorder(onRecordingComplete: () => void) {
     recordStartRef.current = null;
     if (timerRef.current) cancelAnimationFrame(timerRef.current);
     setRecordMs(0);
+    const stream = streamRef.current;
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
   }
   async function cancelRecording() {
     if (!recorder) return;
@@ -146,6 +153,11 @@ export function useRecorder(onRecordingComplete: () => void) {
     recordStartRef.current = null;
     if (timerRef.current) cancelAnimationFrame(timerRef.current);
     setRecordMs(0);
+    const stream = streamRef.current;
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
   }
 
   function probeDurationFromBlob(blob: Blob): Promise<number> {
