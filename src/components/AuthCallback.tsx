@@ -1,19 +1,79 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../utils/supabase';
 
 export function AuthCallback() {
+  const [isRecovery, setIsRecovery] = useState(false);
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
   useEffect(() => {
     const run = async () => {
       const url = new URL(window.location.href);
       const code = url.searchParams.get('code');
+      const type = url.searchParams.get('type');
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);
         if (error) console.error('exchange error', error);
       }
-      window.location.replace('/');
+      if (type === 'recovery') {
+        setIsRecovery(true);
+      } else {
+        window.location.replace('/');
+      }
     };
     run();
   }, []);
 
-  return null;
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+      setMessage('Password updated');
+      setTimeout(() => window.location.replace('/'), 1500);
+    } catch (err: any) {
+      setError(err.message || 'Update failed');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!isRecovery) {
+    return null;
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-base text-content transition-colors duration-300">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-surface p-6 rounded shadow-md w-full max-w-sm space-y-4 transition-all duration-300"
+      >
+        <h1 className="text-2xl font-bold text-center">Reset Password</h1>
+        {error && <div className="text-accent text-sm transition-opacity">{error}</div>}
+        {message && <div className="text-primary text-sm transition-opacity">{message}</div>}
+        <div>
+          <label className="block text-sm mb-1" htmlFor="password">New Password</label>
+          <input
+            id="password"
+            type="password"
+            className="w-full px-3 py-2 rounded bg-base text-content border border-subtle focus:outline-none focus:ring-2 focus:ring-primary transition-colors"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-primary text-surface py-2 rounded hover:bg-secondary disabled:opacity-50 transition-colors"
+        >
+          {loading ? 'Updating...' : 'Update Password'}
+        </button>
+      </form>
+    </div>
+  );
 }
