@@ -12,6 +12,7 @@ export function useRecorder(onRecordingComplete: () => void) {
   const [recordingClip, setRecordingClip] = useState<Clip | null>(null);
   const [recordMs, setRecordMs] = useState(0);
   const recordStartRef = useRef<number | null>(null);
+  const elapsedRef = useRef(0);
   const timerRef = useRef<number | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
@@ -78,14 +79,15 @@ export function useRecorder(onRecordingComplete: () => void) {
     mr.start(200);
     setRecorder(mr);
     recordStartRef.current = performance.now();
+    elapsedRef.current = 0;
     tickTimer();
   }
 
   function tickTimer() {
     if (timerRef.current) cancelAnimationFrame(timerRef.current);
     const step = () => {
-      if (!recordStartRef.current) return;
-      setRecordMs(performance.now() - recordStartRef.current);
+      if (recordStartRef.current === null) return;
+      setRecordMs(elapsedRef.current + (performance.now() - recordStartRef.current));
       timerRef.current = requestAnimationFrame(step);
     };
     timerRef.current = requestAnimationFrame(step);
@@ -95,6 +97,10 @@ export function useRecorder(onRecordingComplete: () => void) {
     if (!recorder) return;
     if (recorder.state === "recording") {
       recorder.pause();
+      if (recordStartRef.current !== null) {
+        elapsedRef.current += performance.now() - recordStartRef.current;
+        recordStartRef.current = null;
+      }
       if (timerRef.current) cancelAnimationFrame(timerRef.current);
     }
   }
@@ -102,6 +108,7 @@ export function useRecorder(onRecordingComplete: () => void) {
     if (!recorder) return;
     if (recorder.state === "paused") {
       recorder.resume();
+      recordStartRef.current = performance.now();
       tickTimer();
     }
   }
@@ -138,6 +145,7 @@ export function useRecorder(onRecordingComplete: () => void) {
     }
     setRecorder(null);
     recordStartRef.current = null;
+    elapsedRef.current = 0;
     if (timerRef.current) cancelAnimationFrame(timerRef.current);
     setRecordMs(0);
     if (stream) {
@@ -151,6 +159,7 @@ export function useRecorder(onRecordingComplete: () => void) {
     setRecorder(null);
     setRecordingClip(null);
     recordStartRef.current = null;
+    elapsedRef.current = 0;
     if (timerRef.current) cancelAnimationFrame(timerRef.current);
     setRecordMs(0);
     const stream = streamRef.current;

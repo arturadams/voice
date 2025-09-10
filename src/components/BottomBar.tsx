@@ -1,9 +1,11 @@
 import { RecorderControls } from "./RecorderControls";
-import { WavRecorder } from "../services/wav-recorder";
 
 type BottomBarProps = {
   isRecording: boolean;
+  isPaused: boolean;
+  showRecorder: boolean;
   startRecording: () => void;
+  resumeRecording: () => void;
   permission: "unknown" | "granted" | "denied";
 };
 

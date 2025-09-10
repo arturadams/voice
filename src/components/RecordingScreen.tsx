@@ -9,10 +9,18 @@ type RecordingScreenProps = {
   stopRecording: () => void;
   pauseRecording: () => void;
   resumeRecording: () => void;
-  cancelRecording: () => void;
+  onClose: () => void;
 };
 
-export function RecordingScreen({ recordMs, analyser, isPaused, stopRecording, pauseRecording, resumeRecording, cancelRecording }: RecordingScreenProps) {
+export function RecordingScreen({
+  recordMs,
+  analyser,
+  isPaused,
+  stopRecording,
+  pauseRecording,
+  resumeRecording,
+  onClose,
+}: RecordingScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const rafRef = useRef<number | null>(null);
 
@@ -70,9 +78,11 @@ export function RecordingScreen({ recordMs, analyser, isPaused, stopRecording, p
 
   return (
     <div className="fixed inset-0 bg-base z-20 flex flex-col items-center justify-center">
-      <button onClick={cancelRecording} className="absolute top-4 right-4">
-        <CloseIcon />
-      </button>
+      {isPaused && (
+        <button onClick={onClose} className="absolute top-4 right-4">
+          <CloseIcon />
+        </button>
+      )}
       <canvas ref={canvasRef} className="w-full h-64" width={800} height={256} />
       <div className="text-2xl font-mono tabular-nums mt-4">{fmt.ms(recordMs)}</div>
       <div className="flex items-center gap-4 mt-4">
