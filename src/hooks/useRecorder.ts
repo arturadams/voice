@@ -97,71 +97,104 @@ export function useRecorder(onRecordingComplete: () => void) {
     timerRef.current = requestAnimationFrame(step);
   }
 
-  function pauseRecording() {
+  async function pauseRecording() {
     const r = recorderRef.current;
-    if (!r) return;
-    if (recorderState === "recording") {
-      r.pause();
-      if (recordStartRef.current !== null) {
-        elapsedRef.current += performance.now() - recordStartRef.current;
-        recordStartRef.current = null;
-      }
-      if (timerRef.current) cancelAnimationFrame(timerRef.current);
-      setRecordMs(elapsedRef.current);
-      setRecorderState("paused");
-    }
-  }
-  function resumeRecording() {
-    const r = recorderRef.current;
-    if (!r) return;
-    if (recorderState === "paused") {
-      r.resume();
-      recordStartRef.current = performance.now();
-      tickTimer();
-      setRecorderState("recording");
-    }
-  }
-  async function stopRecording() {
-    const r = recorderRef.current;
-    if (!r) return;
+    if (!r || recorderState !== "recording") return;
+    recorderRef.current = null;
     const stream = streamRef.current;
     streamRef.current = null;
-    console.log("Stopping recording...");
-    r.stop();
-    console.log("Recording stopped.");
-    const blob = new Blob(chunksRef.current, { type: recordingClip?.mimeType });
-    console.log("Blob created:", blob);
+    await new Promise<void>((resolve) => {
+      if ("onstop" in r) (r as any).onstop = () => resolve();
+      r.stop();
+      if (!("onstop" in r)) resolve();
+    });
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+    }
     const audioCtx = audioCtxRef.current;
     if (audioCtx) {
       audioCtx.close();
       audioCtxRef.current = null;
     }
     analyserRef.current = null;
+    if (recordStartRef.current !== null) {
+      elapsedRef.current += performance.now() - recordStartRef.current;
+      recordStartRef.current = null;
+    }
+    if (timerRef.current) cancelAnimationFrame(timerRef.current);
+    setRecordMs(elapsedRef.current);
+    setRecorderState("paused");
+  }
+  async function resumeRecording() {
+    if (recorderState !== "paused") return;
+    const ok = await ensureMicPermission();
+    if (!ok) return;
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    streamRef.current = stream;
+    let mimeType = recordingClip?.mimeType || "audio/wav";
+    let mr: MediaRecorder | WavRecorder;
+    if (mimeType === "audio/wav" || typeof MediaRecorder === "undefined") {
+      mr = new WavRecorder(stream);
+      mimeType = "audio/wav";
+    } else {
+      mr = new MediaRecorder(stream, { mimeType });
+    }
+    mr.ondataavailable = (ev) => {
+      if (ev.data && ev.data.size > 0) chunksRef.current.push(ev.data);
+    };
+    mr.start(200);
+    recorderRef.current = mr;
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    audioCtxRef.current = ctx;
+    const source = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 1024;
+    source.connect(analyser);
+    analyserRef.current = analyser;
+    recordStartRef.current = performance.now();
+    tickTimer();
+    setRecorderState("recording");
+  }
+  async function stopRecording() {
+    const r = recorderRef.current;
+    recorderRef.current = null;
+    const stream = streamRef.current;
+    streamRef.current = null;
+    if (r && (r as any).state !== "inactive") {
+      await new Promise<void>((resolve) => {
+        if ("onstop" in r) (r as any).onstop = () => resolve();
+        r.stop();
+        if (!("onstop" in r)) resolve();
+      });
+    }
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+    }
+    const audioCtx = audioCtxRef.current;
+    if (audioCtx) {
+      audioCtx.close();
+      audioCtxRef.current = null;
+    }
+    analyserRef.current = null;
+    const blob = new Blob(chunksRef.current, { type: recordingClip?.mimeType });
     const size = blob.size;
     const objectUrl = URL.createObjectURL(blob);
-    console.log("Object URL created:", objectUrl);
     const duration = await probeDurationFromBlob(blob);
-    console.log("Duration probed:", duration);
     const saved: Clip = { ...recordingClip!, blob, objectUrl, size, duration, status: "saved" };
     addClip(saved);
     setRecordingClip(null);
     setRecordMs(0);
     try {
       await storage.save(saved);
-      console.log("Clip saved to storage.");
       onRecordingComplete();
     } catch (err) {
       console.error(err);
     }
-    recorderRef.current = null;
     setRecorderState("inactive");
     recordStartRef.current = null;
     elapsedRef.current = 0;
     if (timerRef.current) cancelAnimationFrame(timerRef.current);
     setRecordMs(0);
-    if (stream) {
-      stream.getTracks().forEach((t) => t.stop());
-    }
   }
   async function cancelRecording() {
     const r = recorderRef.current;
