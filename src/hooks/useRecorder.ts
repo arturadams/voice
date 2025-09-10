@@ -8,7 +8,10 @@ export function useRecorder(onRecordingComplete: () => void) {
   const storage = useStorage();
   const { addClip } = useClips();
   const [permission, setPermission] = useState<"unknown" | "granted" | "denied">("unknown");
-  const [recorder, setRecorder] = useState<MediaRecorder | WavRecorder | null>(null);
+  const recorderRef = useRef<MediaRecorder | WavRecorder | null>(null);
+  const [recorderState, setRecorderState] = useState<"inactive" | "recording" | "paused">(
+    "inactive"
+  );
   const [recordingClip, setRecordingClip] = useState<Clip | null>(null);
   const [recordMs, setRecordMs] = useState(0);
   const recordStartRef = useRef<number | null>(null);
@@ -77,7 +80,8 @@ export function useRecorder(onRecordingComplete: () => void) {
       if (ev.data && ev.data.size > 0) chunksRef.current.push(ev.data);
     };
     mr.start(200);
-    setRecorder(mr);
+    recorderRef.current = mr;
+    setRecorderState("recording");
     recordStartRef.current = performance.now();
     elapsedRef.current = 0;
     tickTimer();
@@ -94,30 +98,36 @@ export function useRecorder(onRecordingComplete: () => void) {
   }
 
   function pauseRecording() {
-    if (!recorder) return;
-    if (recorder.state === "recording") {
-      recorder.pause();
+    const r = recorderRef.current;
+    if (!r) return;
+    if (recorderState === "recording") {
+      r.pause();
       if (recordStartRef.current !== null) {
         elapsedRef.current += performance.now() - recordStartRef.current;
         recordStartRef.current = null;
       }
       if (timerRef.current) cancelAnimationFrame(timerRef.current);
+      setRecordMs(elapsedRef.current);
+      setRecorderState("paused");
     }
   }
   function resumeRecording() {
-    if (!recorder) return;
-    if (recorder.state === "paused") {
-      recorder.resume();
+    const r = recorderRef.current;
+    if (!r) return;
+    if (recorderState === "paused") {
+      r.resume();
       recordStartRef.current = performance.now();
       tickTimer();
+      setRecorderState("recording");
     }
   }
   async function stopRecording() {
-    if (!recorder) return;
+    const r = recorderRef.current;
+    if (!r) return;
     const stream = streamRef.current;
     streamRef.current = null;
     console.log("Stopping recording...");
-    recorder.stop();
+    r.stop();
     console.log("Recording stopped.");
     const blob = new Blob(chunksRef.current, { type: recordingClip?.mimeType });
     console.log("Blob created:", blob);
@@ -143,7 +153,8 @@ export function useRecorder(onRecordingComplete: () => void) {
     } catch (err) {
       console.error(err);
     }
-    setRecorder(null);
+    recorderRef.current = null;
+    setRecorderState("inactive");
     recordStartRef.current = null;
     elapsedRef.current = 0;
     if (timerRef.current) cancelAnimationFrame(timerRef.current);
@@ -153,10 +164,12 @@ export function useRecorder(onRecordingComplete: () => void) {
     }
   }
   async function cancelRecording() {
-    if (!recorder) return;
-    if ("cancel" in recorder) (recorder as any).cancel();
-    else recorder.stop();
-    setRecorder(null);
+    const r = recorderRef.current;
+    if (!r) return;
+    if ("cancel" in r) (r as any).cancel();
+    else r.stop();
+    recorderRef.current = null;
+    setRecorderState("inactive");
     setRecordingClip(null);
     recordStartRef.current = null;
     elapsedRef.current = 0;
@@ -187,7 +200,8 @@ export function useRecorder(onRecordingComplete: () => void) {
     });
   }
 
-  const isRecording = recorder && ["recording", "paused"].includes(recorder.state);
+  const isRecording = recorderState === "recording" || recorderState === "paused";
+  const isPaused = recorderState === "paused";
 
   return {
     isRecording,
@@ -199,6 +213,6 @@ export function useRecorder(onRecordingComplete: () => void) {
     cancelRecording,
     permission,
     analyser: analyserRef.current,
-    recorder,
+    isPaused,
   };
 }

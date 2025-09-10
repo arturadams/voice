@@ -25,6 +25,7 @@ export function MainApp({
 
   const {
     isRecording,
+    isPaused,
     recordMs,
     startRecording,
     stopRecording,
@@ -32,10 +33,7 @@ export function MainApp({
     resumeRecording,
     permission,
     analyser,
-    recorder,
   } = useRecorder(() => setShowPostRecordingModal(true));
-
-  const isPaused = recorder?.state === "paused";
 
   function handleStartRecording() {
     startRecording();
